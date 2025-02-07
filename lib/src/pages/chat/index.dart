@@ -1,3 +1,5 @@
+import 'package:chat/env/env.dart';
+import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -12,33 +14,44 @@ class _ChatPageState extends State<ChatPage> {
   TextEditingController textEditingController = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: LayoutBuilder(builder: (context, constraints) {
-        return Stack(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
           children: [
-            Positioned(bottom: 0, child: _buildChatInput(context, constraints)),
-            SingleChildScrollView(
-              child: Column(
-                children: items,
+            Expanded(
+                child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(5),
+                child: Column(
+                  children: items,
+                ),
               ),
-            )
+            )),
+            _buildChatInput(context, constraints),
           ],
         );
-      }),
+      },
     );
   }
 
   Widget _buildChatBubble(Widget child, bool isMe) {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: child,
+      child: Container(
+        margin: EdgeInsets.all(10),
+        padding: EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 5),
+        decoration: BoxDecoration(
+            color: const Color.fromARGB(113, 220, 220, 220),
+            borderRadius: BorderRadius.circular(5)),
+        child: child,
+      ),
     );
   }
 
   Widget _buildChatInput(BuildContext context, BoxConstraints constraints) {
     return IntrinsicHeight(
         child: Container(
+          margin: EdgeInsets.all(10),
       padding: EdgeInsets.all(10),
       width: constraints.maxWidth,
       constraints: BoxConstraints(maxHeight: 250),
@@ -84,10 +97,11 @@ class _ChatPageState extends State<ChatPage> {
                 onPressed: () {
                   setState(() {
                     message = textEditingController.text;
-                    items.add(
-                      _buildChatBubble(Text(message), true)
-                    );
                     textEditingController.clear();
+                    if (message.trim().isNotEmpty) {
+                      items.add(_buildChatBubble(Text(message), true));
+                      chat(message);
+                    }
                   });
                 },
                 label: Text('发送'),
@@ -99,4 +113,15 @@ class _ChatPageState extends State<ChatPage> {
       ),
     ));
   }
+}
+
+
+Future<void> chat(String prompt) async {
+  OpenAI.apiKey = Env.key;
+  OpenAI.baseUrl = "https://api.deepseek.com/v1";
+  final completion = await OpenAI.instance.completion.create(
+    model: "deepseek-chat",
+    prompt: prompt,
+  );
+  print(completion.choices[0].text);
 }
