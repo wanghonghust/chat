@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:chat/route.dart';
 import 'package:chat/src/pages/not_found/index.dart';
 import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/settings/settings_view.dart';
+import 'package:chat/src/stack/blur_container.dart';
 import 'package:chat/src/stack/slider_menu.dart';
 import 'package:chat/src/stack/window_buttons.dart';
 import 'package:chat/widgets/sidebar/index.dart';
@@ -40,7 +42,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
   @override
   void initState() {
     super.initState();
-    setWindowEffect(effect, false);
+
     activeKey = ValueKey(initialRoute);
   }
 
@@ -74,6 +76,8 @@ class _AppStackState extends State<AppStack> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     routeObserver.subscribe(this, ModalRoute.of(context)!);
+    ThemeNotifier themeNotifier = Provider.of<ThemeNotifier>(context);
+    setWindowEffect(effect, themeNotifier.isDarkMode);
   }
 
   @override
@@ -173,13 +177,15 @@ class _AppStackState extends State<AppStack> with RouteAware {
       ]),
       drawer: showDrawer
           ? Drawer(
-              backgroundColor: themeNotifier.isDarkMode
-                  ? const Color.fromARGB(61, 0, 0, 0)
-                  : const Color.fromARGB(61, 255, 255, 255),
+              backgroundColor: Colors.transparent,
               width: 200,
               shape: RoundedRectangleBorder(),
-              child: sideMenu,
-            )
+              child: BlurryContainer(
+                color: themeNotifier.isDarkMode
+                    ? const Color.fromARGB(255, 29, 31, 45).withAlpha(200)
+                    : const Color.fromARGB(255, 212, 218, 236).withAlpha(200),
+                child: sideMenu,
+              ))
           : null,
     );
   }

@@ -20,6 +20,8 @@ class _ChatPageState extends State<ChatPage> {
   bool think = false;
   bool network = false;
   bool autoScroll = true;
+  final MaterialTextSelectionControls materialTextControls =
+      MaterialTextSelectionControls();
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +42,10 @@ class _ChatPageState extends State<ChatPage> {
                             padding: EdgeInsets.all(10),
                             child: _buildChatBubble(
                                 isMe
-                                    ? Text(content.trim())
+                                    ? SelectableRegion(
+                                        focusNode: FocusNode(),
+                                        selectionControls: materialTextControls,
+                                        child: Text(content.trim()))
                                     : MarkdownWidget(
                                         text: content,
                                       ),
@@ -75,12 +80,12 @@ class _ChatPageState extends State<ChatPage> {
     bool isSmallScreen = MediaQuery.of(context).size.width < 600;
     return IntrinsicHeight(
         child: Container(
-      margin: EdgeInsets.all(10),
+      margin: EdgeInsets.all(20),
       padding: EdgeInsets.all(10),
       width: constraints.maxWidth,
       constraints: BoxConstraints(maxHeight: 250),
       decoration: BoxDecoration(
-          color: Theme.of(context).cardColor.withAlpha(80),
+          color: Theme.of(context).hoverColor,
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(

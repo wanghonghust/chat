@@ -20,7 +20,9 @@ Future<void> main() async {
     await Window.hideWindowControls();
   }
   runApp(ChangeNotifierProvider(
-      create: (context) => ThemeNotifier(lightTheme, context, ThemeMode.light),
+      create: (context) {
+        return ThemeNotifier(lightTheme, context, ThemeMode.system);
+      },
       child: MyApp()));
   if (Platform.isWindows) {
     doWhenWindowReady(() {
@@ -33,8 +35,14 @@ Future<void> main() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {

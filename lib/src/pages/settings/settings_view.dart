@@ -238,9 +238,6 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                   Divider(
                     height: 1.0,
-                    color: brightness == InterfaceBrightness.dark
-                        ? Colors.white12
-                        : Colors.black12,
                   ),
                   buildActionButtonBar(context),
                   buildMacOSActionMenuOpener(context),

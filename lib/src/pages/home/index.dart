@@ -7,6 +7,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int count = 0;
+  final MaterialTextSelectionControls materialTextControls =
+      MaterialTextSelectionControls();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +27,16 @@ class _HomePageState extends State<HomePage> {
                     count++;
                   });
                 },
-                child: Text("Add"))
+                child: Text("Add")),
+            SelectableRegion(
+              selectionControls: materialTextControls,
+              focusNode: FocusNode(),
+              child: GestureDetector(
+                onTap: () {}, // 避免覆盖默认手势
+                behavior: HitTestBehavior.translucent,
+                child: Text('可点击且可选择的文本'),
+              ),
+            )
           ],
         ),
       ),

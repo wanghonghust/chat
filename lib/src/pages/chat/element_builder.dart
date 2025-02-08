@@ -1,13 +1,11 @@
+import 'package:chat/src/pages/chat/highlight_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
-import 'package:flutter_highlight/flutter_highlight.dart';
-import 'package:flutter_highlight/themes/atom-one-dark-reasonable.dart';
-import 'package:flutter_highlight/themes/atelier-heath-light.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CodeElementBuilder extends MarkdownElementBuilder {
-  CodeElementBuilder(this.context);
+  CodeElementBuilder({required this.context});
   final BuildContext context;
 
   @override
@@ -38,7 +36,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
 }
 
 class PreElementBuilder extends MarkdownElementBuilder {
-  PreElementBuilder(this.context);
+  PreElementBuilder({required this.context});
   final BuildContext context;
 
   @override
