@@ -6,6 +6,7 @@ var lightTheme = FlexThemeData.light(
     scheme: FlexScheme.indigoM3,
     scaffoldBackground: Colors.transparent,
     subThemesData: const FlexSubThemesData(
+        drawerBackgroundSchemeColor: SchemeColor.transparent,
         interactionEffects: true,
         tintedDisabledControls: true,
         useM2StyleDividerInM3: true,
@@ -36,6 +37,7 @@ var darkTheme = FlexThemeData.dark(
     scaffoldBackground: Colors.transparent,
     scheme: FlexScheme.indigoM3,
     subThemesData: const FlexSubThemesData(
+        drawerBackgroundSchemeColor: SchemeColor.transparent,
         interactionEffects: true,
         tintedDisabledControls: true,
         blendOnColors: true,

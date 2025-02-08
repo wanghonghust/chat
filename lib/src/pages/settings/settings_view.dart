@@ -41,7 +41,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class SettingsPageState extends State<SettingsPage> {
-  WindowEffect effect = WindowEffect.acrylic;
+  WindowEffect effect = WindowEffect.mica;
   Color color = Colors.transparent;
   InterfaceBrightness brightness = InterfaceBrightness.dark;
   MacOSBlurViewState macOSBlurViewState =

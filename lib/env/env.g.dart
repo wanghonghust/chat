@@ -10,5 +10,5 @@ part of 'env.dart';
 // ignore_for_file: type=lint
 // generated_from: .env
 final class _Env {
-static const String key = 'sk-dcf8fd67206546b4bad024e4c3256518';
+static const String key = 'sk-9109a1e36c6f4b69b0ecccb8e1b80474';
 }

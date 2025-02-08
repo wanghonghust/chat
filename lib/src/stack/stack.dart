@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:chat/route.dart';
 import 'package:chat/src/pages/not_found/index.dart';
+import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/settings/settings_view.dart';
 import 'package:chat/src/stack/slider_menu.dart';
 import 'package:chat/src/stack/window_buttons.dart';
@@ -11,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/macos/macos_blur_view_state.dart';
 import 'package:flutter_acrylic/window.dart';
 import 'package:flutter_acrylic/window_effect.dart';
+import 'package:provider/provider.dart';
 
 const String initialRoute = '/';
 
@@ -25,7 +27,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<NavigatorState> _localNavigatorKey =
       GlobalKey<NavigatorState>();
-  WindowEffect effect = WindowEffect.acrylic;
+  WindowEffect effect = WindowEffect.mica;
   Color color = Colors.transparent;
   InterfaceBrightness brightness = InterfaceBrightness.dark;
   MacOSBlurViewState macOSBlurViewState =
@@ -124,7 +126,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
       navigatorKey: _localNavigatorKey,
     );
     bool showDrawer = isDesktop && isSmallScreen || !isDesktop;
-
+    ThemeNotifier themeNotifier = Provider.of<ThemeNotifier>(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
       key: _scaffoldKey,
@@ -171,6 +173,9 @@ class _AppStackState extends State<AppStack> with RouteAware {
       ]),
       drawer: showDrawer
           ? Drawer(
+              backgroundColor: themeNotifier.isDarkMode
+                  ? const Color.fromARGB(61, 0, 0, 0)
+                  : const Color.fromARGB(61, 255, 255, 255),
               width: 200,
               shape: RoundedRectangleBorder(),
               child: sideMenu,
