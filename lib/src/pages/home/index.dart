@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:chat/src/database/models/conversation.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -9,10 +12,10 @@ class _HomePageState extends State<HomePage> {
   int count = 0;
   final MaterialTextSelectionControls materialTextControls =
       MaterialTextSelectionControls();
+  bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
       body: Center(
         child: Column(
           children: [
@@ -23,9 +26,11 @@ class _HomePageState extends State<HomePage> {
                 child: Text("Settings $count")),
             OutlinedButton(
                 onPressed: () {
-                  setState(() {
-                    count++;
-                  });
+                  var con = Conversation(
+                    title: 'Fido'
+                  );
+
+                  Conversation.insertConversation(con);
                 },
                 child: Text("Add")),
             SelectableRegion(

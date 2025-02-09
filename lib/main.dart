@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:chat/src/database/index.dart';
 import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/settings/theme.dart';
 import 'package:chat/src/stack/stack.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
+  initDatabase();
   WidgetsFlutterBinding.ensureInitialized();
   if (!Platform.isAndroid && !Platform.isIOS) {
     await Window.initialize();

@@ -1,4 +1,6 @@
 import 'package:chat/env/env.dart';
+import 'package:chat/src/database/models/Conversation.dart';
+import 'package:chat/src/database/models/message.dart';
 import 'package:chat/src/pages/chat/markodwn_widget.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:dart_openai/dart_openai.dart';
@@ -6,11 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 class ChatPage extends StatefulWidget {
+  dynamic arguments;
+  ChatPage({super.key, this.arguments});
   @override
   _ChatPageState createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<ChatPage> {
+  Conversation? conversation;
   List<Widget> items = [];
   bool done = true;
   List<OpenAIChatCompletionChoiceMessageModel> messages = [];
@@ -24,11 +29,47 @@ class _ChatPageState extends State<ChatPage> {
       MaterialTextSelectionControls();
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.arguments != null) {
+      conversation = widget.arguments as Conversation;
+      fetchData();
+    }
+  }
+
+  void fetchData() async {
+    List<Message> mes = await Message.getConversationMessage(conversation!.id!);
+    mes.forEach((item) {
+      OpenAIChatMessageRole role = item.role == 0
+          ? OpenAIChatMessageRole.user
+          : OpenAIChatMessageRole.assistant;
+
+      setState(() {
+        messages.add(OpenAIChatCompletionChoiceMessageModel(
+          content: [
+            OpenAIChatCompletionChoiceMessageContentItemModel.text(
+              item.content,
+            ),
+          ],
+          role: role,
+        ));
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Column(
           children: [
+            Text(
+              conversation?.title ?? "Chat",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
             Expanded(
               child: messages.isNotEmpty
                   ? ListView.builder(
@@ -167,9 +208,17 @@ class _ChatPageState extends State<ChatPage> {
     ));
   }
 
-  void sendMessage() {
+  void sendMessage() async {
+    String message = textEditingController.text;
+    if (conversation == null) {
+      Conversation con = Conversation(title: message);
+      int id = await Conversation.insertConversation(con);
+      setState(() {
+        conversation = Conversation(title: message, id: id);
+      });
+    }
     setState(() {
-      userMessage = textEditingController.text;
+      userMessage = message;
       textEditingController.clear();
       if (userMessage.trim().isNotEmpty) {
         items.add(_buildChatBubble(Text(userMessage), true));
@@ -182,6 +231,11 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       done = false;
     });
+    if (conversation != null) {
+      Message msg =
+          Message(content: message, conversationId: conversation!.id!, role: 0);
+      await Message.insertMessage(msg);
+    }
     StringBuffer responseBuffer = StringBuffer();
     OpenAI.apiKey = Env.key;
     OpenAI.baseUrl = "https://dashscope.aliyuncs.com/compatible-mode";
@@ -232,10 +286,17 @@ class _ChatPageState extends State<ChatPage> {
           }
         });
       },
-      onDone: () {
+      onDone: () async {
         setState(() {
           done = true;
         });
+        if (conversation != null) {
+          Message msg = Message(
+              content: responseBuffer.toString(),
+              conversationId: conversation!.id!,
+              role: 1);
+          await Message.insertMessage(msg);
+        }
         responseBuffer.clear();
       },
     );

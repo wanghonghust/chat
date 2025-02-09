@@ -1,10 +1,13 @@
+import 'dart:io';
+
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 var lightTheme = FlexThemeData.light(
     scheme: FlexScheme.indigoM3,
-    scaffoldBackground: Colors.transparent,
+    scaffoldBackground: isDesktop? Colors.transparent:null,
     subThemesData: const FlexSubThemesData(
         drawerBackgroundSchemeColor: SchemeColor.transparent,
         interactionEffects: true,
@@ -34,7 +37,7 @@ var lightTheme = FlexThemeData.light(
     visualDensity: FlexColorScheme.comfortablePlatformDensity,
     cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true));
 var darkTheme = FlexThemeData.dark(
-    scaffoldBackground: Colors.transparent,
+    scaffoldBackground: isDesktop? Colors.transparent:null,
     scheme: FlexScheme.indigoM3,
     subThemesData: const FlexSubThemesData(
         drawerBackgroundSchemeColor: SchemeColor.transparent,

@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:chat/route.dart';
+import 'package:chat/src/database/models/Conversation.dart';
 import 'package:chat/src/pages/not_found/index.dart';
 import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/settings/settings_view.dart';
@@ -39,11 +40,20 @@ class _AppStackState extends State<AppStack> with RouteAware {
       RouteObserver<ModalRoute<void>>();
   bool? canPop = false;
   Key? activeKey;
+  List<Conversation> conversations = [];
   @override
   void initState() {
     super.initState();
-
+    fetchConversations();
     activeKey = ValueKey(initialRoute);
+  }
+
+  void fetchConversations() async {
+    List<Conversation> histories = await Conversation.getConversations();
+    print(histories);
+    setState(() {
+      conversations = histories;
+    });
   }
 
   void updateUi() {
@@ -126,14 +136,15 @@ class _AppStackState extends State<AppStack> with RouteAware {
     });
     Widget sideMenu = SliderMenu(
       items: items,
+      histories: conversations,
       activeKey: activeKey,
       navigatorKey: _localNavigatorKey,
     );
     bool showDrawer = isDesktop && isSmallScreen || !isDesktop;
     ThemeNotifier themeNotifier = Provider.of<ThemeNotifier>(context);
     return Scaffold(
-      backgroundColor: Colors.transparent,
       key: _scaffoldKey,
+      appBar: isDesktop ? null : AppBar(),
       body: Column(children: [
         if (isDesktop)
           WindowTitleBarBox(
@@ -206,13 +217,22 @@ class _AppStackState extends State<AppStack> with RouteAware {
       initialRoute: initialRoute,
       observers: [routeObserver],
       onGenerateRoute: (RouteSettings settings) {
-        WidgetBuilder builder;
-        builder = routes[settings.name]?.builder ?? (_) => NotFoundPage();
+        CustomBuilder builder;
+        List<String> res = settings.name!.split(":");
+        String? route = res.first;
+        dynamic arguments = res.length == 3
+            ? Conversation(
+                id: int.parse(res[1]),
+                title: res[2],
+              )
+            : null;
+
+        builder = routes[route]?.builder ?? (_, __) => NotFoundPage();
         return MaterialPageRoute(
           maintainState: true,
           builder: (context) {
             routeObserver.subscribe(this, ModalRoute.of(context)!);
-            return builder(context);
+            return builder(context, arguments);
           },
           settings: settings,
         );

@@ -3,11 +3,13 @@ import 'package:chat/src/pages/home/index.dart';
 import 'package:chat/src/pages/settings/settings_view.dart';
 import 'package:flutter/material.dart';
 
+typedef CustomBuilder = Widget Function(BuildContext context,dynamic arguments);
+
 class RouteItem {
   final String title;
   final String route;
   final IconData icon;
-  final WidgetBuilder builder;
+  final CustomBuilder builder;
   final Function(BuildContext context)? onTap;
 
   RouteItem({
@@ -24,7 +26,7 @@ Map<String, RouteItem> routes = {
     route: '/',
     title: 'Home',
     icon: Icons.home,
-    builder: (context) => HomePage(),
+    builder: (context,arguments) => HomePage(),
     onTap: (context) => {
       Navigator.pushNamed(context, '/'),
     },
@@ -33,7 +35,7 @@ Map<String, RouteItem> routes = {
     route: '/chat',
     title: 'Chat',
     icon: Icons.architecture,
-    builder: (context) => ChatPage(),
+    builder: (context,arguments) => ChatPage(arguments: arguments,),
     onTap: (context) => {
       Navigator.pushNamed(context, '/chat'),
     },
@@ -42,7 +44,7 @@ Map<String, RouteItem> routes = {
     route: '/settings',
     title: 'Settings',
     icon: Icons.settings,
-    builder: (context) => SettingsPage(),
+    builder: (context,arguments) => SettingsPage(),
     onTap: (context) => {
       Navigator.pushNamed(context, '/settings'),
     },
