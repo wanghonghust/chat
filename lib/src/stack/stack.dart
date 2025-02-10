@@ -3,7 +3,8 @@ import 'dart:ui';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:chat/route.dart';
-import 'package:chat/src/database/models/Conversation.dart';
+import 'package:chat/src/data_provider/index.dart';
+import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/pages/not_found/index.dart';
 import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/settings/settings_view.dart';
@@ -17,7 +18,7 @@ import 'package:flutter_acrylic/window.dart';
 import 'package:flutter_acrylic/window_effect.dart';
 import 'package:provider/provider.dart';
 
-const String initialRoute = '/';
+const String initialRoute = '/chat';
 
 class AppStack extends StatefulWidget {
   const AppStack({super.key});
@@ -40,21 +41,13 @@ class _AppStackState extends State<AppStack> with RouteAware {
       RouteObserver<ModalRoute<void>>();
   bool? canPop = false;
   Key? activeKey;
-  List<Conversation> conversations = [];
   @override
   void initState() {
     super.initState();
-    fetchConversations();
     activeKey = ValueKey(initialRoute);
   }
 
-  void fetchConversations() async {
-    List<Conversation> histories = await Conversation.getConversations();
-    print(histories);
-    setState(() {
-      conversations = histories;
-    });
-  }
+
 
   void updateUi() {
     setState(() {});
@@ -126,7 +119,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
   Widget build(BuildContext context) {
     bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
     bool isSmallScreen = MediaQuery.of(context).size.width < 600;
-
+    AppDataProvider dataProvider = Provider.of<AppDataProvider>(context);
     List<SidebarItem> items = [];
     routes.forEach((key, value) {
       items.add(SidebarItem(
@@ -138,7 +131,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
     });
     Widget sideMenu = SliderMenu(
       items: items,
-      histories: conversations,
+      histories: dataProvider.conversations,
       activeKey: activeKey,
       navigatorKey: _localNavigatorKey,
     );

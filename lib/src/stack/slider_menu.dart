@@ -1,4 +1,4 @@
-import 'package:chat/src/database/models/Conversation.dart';
+import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/pages/chat/index.dart';
 import 'package:chat/widgets/sidebar/index.dart';
 import 'package:flutter/material.dart';

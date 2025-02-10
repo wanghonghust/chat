@@ -1,7 +1,6 @@
-import 'dart:ffi';
-
 import 'package:chat/env/env.dart';
-import 'package:chat/src/database/models/Conversation.dart';
+import 'package:chat/src/data_provider/index.dart';
+import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/database/models/message.dart';
 import 'package:chat/src/pages/chat/markodwn_widget.dart';
 import 'package:chat/src/pages/chat/select_widget.dart';
@@ -9,6 +8,7 @@ import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:provider/provider.dart';
 
 class ChatPage extends StatefulWidget {
   dynamic arguments;
@@ -37,7 +37,6 @@ class _ChatPageState extends State<ChatPage> {
 
   List<Widget> items = [];
   bool done = true;
-  Map<String, List<OpenAIChatCompletionChoiceMessageModel>> messages = {};
   List<OpenAIChatCompletionChoiceMessageModel> orderedMessages = [];
   String userMessage = "";
   TextEditingController textEditingController = TextEditingController();
@@ -65,25 +64,20 @@ class _ChatPageState extends State<ChatPage> {
           ? OpenAIChatMessageRole.user
           : OpenAIChatMessageRole.assistant;
 
-      setState(() {
-        OpenAIChatCompletionChoiceMessageModel chatModel =
-            OpenAIChatCompletionChoiceMessageModel(
-          content: [
-            OpenAIChatCompletionChoiceMessageContentItemModel.text(
-              item.content,
-            ),
-          ],
-          role: role,
-          name: item.model,
-        );
-        orderedMessages.add(chatModel);
-        if (messages.containsKey(item.model)) {
-          messages[item.model]!.add(chatModel);
-        } else {
-          messages[item.model] = [chatModel];
-        }
-      });
+      OpenAIChatCompletionChoiceMessageModel chatModel =
+          OpenAIChatCompletionChoiceMessageModel(
+        content: [
+          OpenAIChatCompletionChoiceMessageContentItemModel.text(
+            item.content,
+          ),
+        ],
+        role: role,
+        name: item.model,
+      );
+
+      orderedMessages.add(chatModel);
     });
+    setState(() {});
   }
 
   @override
@@ -102,18 +96,21 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 )),
             Expanded(
-              child: messages.isNotEmpty
+              child: orderedMessages.isNotEmpty
                   ? ListView.builder(
                       controller: _scrollController,
                       itemBuilder: (context, index) {
                         final String content =
                             orderedMessages[index].content![0].text!;
-                        final bool isMe = orderedMessages[index].role ==
-                            OpenAIChatMessageRole.user;
+                        final String? bubleModel =
+                            orderedMessages[index].role ==
+                                    OpenAIChatMessageRole.user
+                                ? null
+                                : orderedMessages[index].name;
                         return Padding(
                             padding: EdgeInsets.all(10),
                             child: _buildChatBubble(
-                                isMe
+                                bubleModel == null
                                     ? SelectableRegion(
                                         focusNode: FocusNode(),
                                         selectionControls: materialTextControls,
@@ -121,7 +118,7 @@ class _ChatPageState extends State<ChatPage> {
                                     : MarkdownWidget(
                                         text: content,
                                       ),
-                                isMe));
+                                bubleModel));
                       },
                       itemCount: orderedMessages.length,
                     )
@@ -132,14 +129,6 @@ class _ChatPageState extends State<ChatPage> {
         );
       },
     );
-  }
-
-  List<OpenAIChatCompletionChoiceMessageModel> getMessages() {
-    List<OpenAIChatCompletionChoiceMessageModel> res = [];
-    messages.forEach((key, value) {
-      res.addAll(value);
-    });
-    return res;
   }
 
   List<OpenAIChatCompletionChoiceMessageModel> getCurrentModelMessages(
@@ -153,36 +142,36 @@ class _ChatPageState extends State<ChatPage> {
     return res;
   }
 
-  Future<void> getModelMessages(String model) async {
-    if (conversation != null) {
-      List<Message> res =
-          await Message.getModelConversationMessage(conversation!.id!, model);
-      List<OpenAIChatCompletionChoiceMessageModel> res1 = [];
-      res.forEach((item) {
-        OpenAIChatMessageRole role = item.role == 0
-            ? OpenAIChatMessageRole.user
-            : OpenAIChatMessageRole.assistant;
-        res1.add(OpenAIChatCompletionChoiceMessageModel(content: [
-          OpenAIChatCompletionChoiceMessageContentItemModel.text(
-            item.content,
-          ),
-        ], role: role, name: model));
-      });
-      orderedMessages = res1;
-    }
-  }
-
-  Widget _buildChatBubble(Widget child, bool isMe) {
+  Widget _buildChatBubble(Widget child, String? model) {
+    Widget mesageWidget = Container(
+      margin: EdgeInsets.all(10),
+      padding: EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 5),
+      decoration: BoxDecoration(
+          color: Theme.of(context).hoverColor,
+          borderRadius: BorderRadius.circular(5)),
+      child: child,
+    );
     return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: EdgeInsets.all(10),
-        padding: EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 5),
-        decoration: BoxDecoration(
-            color: Theme.of(context).hoverColor,
-            borderRadius: BorderRadius.circular(5)),
-        child: child,
-      ),
+      alignment: model == null ? Alignment.centerRight : Alignment.centerLeft,
+      child: model == null
+          ? mesageWidget
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(left: 10, right: 10),
+                  child: Chip(
+                      shape: StadiumBorder(),
+                      backgroundColor: Colors.transparent,
+                      padding: EdgeInsets.all(0),
+                      label: Text(
+                        model,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      )),
+                ),
+                mesageWidget
+              ],
+            ),
     );
   }
 
@@ -223,57 +212,23 @@ class _ChatPageState extends State<ChatPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  SelectWidget(
-                      value: model,
-                      items: models,
-                      onSelected: (value) {
-                        setState(() {
-                          model = value;
-                        });
-                      }),
-                  SizedBox(width: 10),
-                  ToggleButton(
-                      icon: Icon(
-                        Icons.emoji_objects,
-                        size: 16,
-                      ),
-                      isSelected: think,
-                      label: isSmallScreen ? null : Text("深度思考"),
-                      onSelected: (value) {
-                        setState(() {
-                          think = value;
-                        });
-                      }),
-                  SizedBox(width: 10),
-                  ToggleButton(
-                      icon: Icon(
-                        Icons.wifi,
-                        size: 16,
-                      ),
-                      isSelected: network,
-                      label: isSmallScreen ? null : Text("联网搜索"),
-                      onSelected: (value) {
-                        setState(() {
-                          network = value;
-                        });
-                      }),
-                  SizedBox(width: 10),
-                  ToggleButton(
-                      icon: Icon(
-                        Icons.import_export,
-                        size: 16,
-                      ),
-                      isSelected: autoScroll,
-                      label: isSmallScreen ? null : Text("自动滚动"),
-                      onSelected: (value) {
-                        setState(() {
-                          autoScroll = value;
-                        });
-                      }),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    SelectWidget(
+                        value: model,
+                        items: models,
+                        onSelected: (value) {
+                          setState(() {
+                            model = value;
+                          });
+                        }),
+                    SizedBox(width: 10),
+                    Expanded(child: _buildMenu(context, isSmallScreen)),
+                  ],
+                ),
               ),
+              SizedBox(width: 10),
               ElevatedButton.icon(
                 onPressed: done ? sendMessage : null,
                 label: Text('发送'),
@@ -286,20 +241,84 @@ class _ChatPageState extends State<ChatPage> {
     ));
   }
 
+  Widget _buildMenu(BuildContext context, bool isSmallScreen) {
+    ScrollController _scrollController = ScrollController();
+    return Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          controller: _scrollController,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ToggleButton(
+                  icon: Icon(
+                    Icons.emoji_objects,
+                    size: 16,
+                  ),
+                  isSelected: think,
+                  label: isSmallScreen ? null : Text("深度思考"),
+                  onSelected: (value) {
+                    setState(() {
+                      think = value;
+                    });
+                  }),
+              SizedBox(width: 10),
+              ToggleButton(
+                  icon: Icon(
+                    Icons.wifi,
+                    size: 16,
+                  ),
+                  isSelected: network,
+                  label: isSmallScreen
+                      ? null
+                      : Text(
+                          "联网搜索",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                  onSelected: (value) {
+                    setState(() {
+                      network = value;
+                    });
+                  }),
+              SizedBox(width: 10),
+              ToggleButton(
+                  icon: Icon(
+                    Icons.import_export,
+                    size: 16,
+                  ),
+                  isSelected: autoScroll,
+                  label: isSmallScreen ? null : Text("自动滚动"),
+                  onSelected: (value) {
+                    setState(() {
+                      autoScroll = value;
+                    });
+                  }),
+            ],
+          ),
+        ));
+  }
+
   void sendMessage() async {
+    AppDataProvider dataProvider =
+        Provider.of<AppDataProvider>(context, listen: false);
     String message = textEditingController.text;
     if (conversation == null) {
       Conversation con = Conversation(title: message);
       int id = await Conversation.insertConversation(con);
+      conversation = Conversation(title: message, id: id);
+      dataProvider.addConversation(conversation!);
       setState(() {
-        conversation = Conversation(title: message, id: id);
+        
       });
     }
     setState(() {
       userMessage = message;
       textEditingController.clear();
       if (userMessage.trim().isNotEmpty) {
-        items.add(_buildChatBubble(Text(userMessage), true));
+        items.add(_buildChatBubble(Text(userMessage), null));
         chat(userMessage);
       }
     });
@@ -322,11 +341,6 @@ class _ChatPageState extends State<ChatPage> {
 
     setState(() {
       orderedMessages.add(userMessage);
-      if (messages[chatModel] != null) {
-        messages[chatModel]!.add(userMessage);
-      } else {
-        messages[chatModel] = [userMessage];
-      }
     });
 
     List<OpenAIChatCompletionChoiceMessageModel> modelMessages =
@@ -335,15 +349,13 @@ class _ChatPageState extends State<ChatPage> {
       model: chatModel,
       messages: modelMessages,
     );
+
     var resModel = OpenAIChatCompletionChoiceMessageModel(content: [
       OpenAIChatCompletionChoiceMessageContentItemModel.text(
         "",
       )
     ], role: OpenAIChatMessageRole.assistant, name: chatModel);
     setState(() {
-      if (messages[chatModel] != null) {
-        messages[chatModel]!.add(resModel);
-      }
       orderedMessages.add(resModel);
     });
     chatStream.listen(
@@ -354,17 +366,13 @@ class _ChatPageState extends State<ChatPage> {
             modelMessages = getCurrentModelMessages(chatModel);
 
             responseBuffer.write(item.text);
-            var mm = messages[chatModel]![modelMessages.length - 1] =
-                OpenAIChatCompletionChoiceMessageModel(content: [
+            var mm = OpenAIChatCompletionChoiceMessageModel(content: [
               OpenAIChatCompletionChoiceMessageContentItemModel.text(
                 responseBuffer.toString(),
               )
             ], role: OpenAIChatMessageRole.assistant, name: chatModel);
             setState(() {
               orderedMessages[orderedMessages.length - 1] = mm;
-              if (messages[chatModel] != null) {
-                messages[chatModel]![modelMessages.length - 1] = mm;
-              }
             });
             if (autoScroll) {
               _scrollController

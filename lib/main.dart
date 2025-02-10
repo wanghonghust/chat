@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:chat/src/data_provider/index.dart';
 import 'package:chat/src/database/index.dart';
+import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/settings/theme.dart';
 import 'package:chat/src/stack/stack.dart';
@@ -21,16 +23,19 @@ Future<void> main() async {
   if (Platform.isWindows) {
     await Window.hideWindowControls();
   }
-  runApp(ChangeNotifierProvider(
-      create: (context) {
-        return ThemeNotifier(lightTheme, context, ThemeMode.system);
-      },
-      child: MyApp()));
+
+  List<Conversation> histories = await Conversation.getConversations();
+  runApp(MultiProvider(providers: [
+    ChangeNotifierProvider(
+        create: (context) =>
+            ThemeNotifier(lightTheme, context, ThemeMode.system)),
+    ChangeNotifierProvider(create: (_) => AppDataProvider(histories))
+  ], child: MyApp()));
   if (Platform.isWindows) {
     doWhenWindowReady(() {
       appWindow
         ..minSize = Size(250, 360)
-        ..size = Size(720, 540)
+        ..size = Size(1000, 540)
         ..alignment = Alignment.center
         ..show();
     });
@@ -45,7 +50,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeNotifier>(builder: (context, themeNotifier, child) {
