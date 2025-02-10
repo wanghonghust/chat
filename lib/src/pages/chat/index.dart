@@ -1,7 +1,10 @@
+import 'dart:ffi';
+
 import 'package:chat/env/env.dart';
 import 'package:chat/src/database/models/Conversation.dart';
 import 'package:chat/src/database/models/message.dart';
 import 'package:chat/src/pages/chat/markodwn_widget.dart';
+import 'package:chat/src/pages/chat/select_widget.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
@@ -16,15 +19,33 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   Conversation? conversation;
+  String model = "qwen-plus";
+  List<PopupMenuItem<String>> models = [
+    PopupMenuItem(
+      value: "qwen-plus",
+      child: Text("通义千问 Plus"),
+    ),
+    PopupMenuItem(
+      value: "deepseek-r1",
+      child: Text("DeepSeek R1"),
+    ),
+    PopupMenuItem(
+      value: "deepseek-v3",
+      child: Text("DeepSeek V3"),
+    )
+  ];
+
   List<Widget> items = [];
   bool done = true;
-  List<OpenAIChatCompletionChoiceMessageModel> messages = [];
+  Map<String, List<OpenAIChatCompletionChoiceMessageModel>> messages = {};
+  List<OpenAIChatCompletionChoiceMessageModel> orderedMessages = [];
   String userMessage = "";
   TextEditingController textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool think = false;
   bool network = false;
   bool autoScroll = true;
+  bool selectModel = false;
   final MaterialTextSelectionControls materialTextControls =
       MaterialTextSelectionControls();
 
@@ -45,14 +66,22 @@ class _ChatPageState extends State<ChatPage> {
           : OpenAIChatMessageRole.assistant;
 
       setState(() {
-        messages.add(OpenAIChatCompletionChoiceMessageModel(
+        OpenAIChatCompletionChoiceMessageModel chatModel =
+            OpenAIChatCompletionChoiceMessageModel(
           content: [
             OpenAIChatCompletionChoiceMessageContentItemModel.text(
               item.content,
             ),
           ],
           role: role,
-        ));
+          name: item.model,
+        );
+        orderedMessages.add(chatModel);
+        if (messages.containsKey(item.model)) {
+          messages[item.model]!.add(chatModel);
+        } else {
+          messages[item.model] = [chatModel];
+        }
       });
     });
   }
@@ -63,22 +92,24 @@ class _ChatPageState extends State<ChatPage> {
       builder: (context, constraints) {
         return Column(
           children: [
-            Text(
-              conversation?.title ?? "Chat",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
+            Padding(
+                padding: EdgeInsets.only(left: 20, right: 20),
+                child: Text(
+                  conversation?.title ?? "Chat",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                )),
             Expanded(
               child: messages.isNotEmpty
                   ? ListView.builder(
                       controller: _scrollController,
                       itemBuilder: (context, index) {
                         final String content =
-                            messages[index].content![0].text!;
-                        final bool isMe =
-                            messages[index].role == OpenAIChatMessageRole.user;
+                            orderedMessages[index].content![0].text!;
+                        final bool isMe = orderedMessages[index].role ==
+                            OpenAIChatMessageRole.user;
                         return Padding(
                             padding: EdgeInsets.all(10),
                             child: _buildChatBubble(
@@ -92,7 +123,7 @@ class _ChatPageState extends State<ChatPage> {
                                       ),
                                 isMe));
                       },
-                      itemCount: messages.length,
+                      itemCount: orderedMessages.length,
                     )
                   : SizedBox.shrink(),
             ),
@@ -101,6 +132,44 @@ class _ChatPageState extends State<ChatPage> {
         );
       },
     );
+  }
+
+  List<OpenAIChatCompletionChoiceMessageModel> getMessages() {
+    List<OpenAIChatCompletionChoiceMessageModel> res = [];
+    messages.forEach((key, value) {
+      res.addAll(value);
+    });
+    return res;
+  }
+
+  List<OpenAIChatCompletionChoiceMessageModel> getCurrentModelMessages(
+      String model) {
+    List<OpenAIChatCompletionChoiceMessageModel> res = [];
+    orderedMessages.forEach((item) {
+      if (item.name == model) {
+        res.add(item);
+      }
+    });
+    return res;
+  }
+
+  Future<void> getModelMessages(String model) async {
+    if (conversation != null) {
+      List<Message> res =
+          await Message.getModelConversationMessage(conversation!.id!, model);
+      List<OpenAIChatCompletionChoiceMessageModel> res1 = [];
+      res.forEach((item) {
+        OpenAIChatMessageRole role = item.role == 0
+            ? OpenAIChatMessageRole.user
+            : OpenAIChatMessageRole.assistant;
+        res1.add(OpenAIChatCompletionChoiceMessageModel(content: [
+          OpenAIChatCompletionChoiceMessageContentItemModel.text(
+            item.content,
+          ),
+        ], role: role, name: model));
+      });
+      orderedMessages = res1;
+    }
   }
 
   Widget _buildChatBubble(Widget child, bool isMe) {
@@ -156,6 +225,15 @@ class _ChatPageState extends State<ChatPage> {
             children: [
               Row(
                 children: [
+                  SelectWidget(
+                      value: model,
+                      items: models,
+                      onSelected: (value) {
+                        setState(() {
+                          model = value;
+                        });
+                      }),
+                  SizedBox(width: 10),
                   ToggleButton(
                       icon: Icon(
                         Icons.emoji_objects,
@@ -228,56 +306,65 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> chat(String message) async {
+    String chatModel = model;
     setState(() {
       done = false;
     });
-    if (conversation != null) {
-      Message msg =
-          Message(content: message, conversationId: conversation!.id!, role: 0);
-      await Message.insertMessage(msg);
-    }
+
     StringBuffer responseBuffer = StringBuffer();
     OpenAI.apiKey = Env.key;
     OpenAI.baseUrl = "https://dashscope.aliyuncs.com/compatible-mode";
-    final userMessage = OpenAIChatCompletionChoiceMessageModel(
-      content: [
-        OpenAIChatCompletionChoiceMessageContentItemModel.text(
-          message,
-        ),
-      ],
-      role: OpenAIChatMessageRole.user,
-    );
+    final userMessage = OpenAIChatCompletionChoiceMessageModel(content: [
+      OpenAIChatCompletionChoiceMessageContentItemModel.text(
+        message,
+      ),
+    ], role: OpenAIChatMessageRole.user, name: chatModel);
+
     setState(() {
-      messages.add(userMessage);
+      orderedMessages.add(userMessage);
+      if (messages[chatModel] != null) {
+        messages[chatModel]!.add(userMessage);
+      } else {
+        messages[chatModel] = [userMessage];
+      }
     });
-    final chatStream = await OpenAI.instance.chat.createStream(
-      model: "qwen-plus",
-      messages: messages,
+
+    List<OpenAIChatCompletionChoiceMessageModel> modelMessages =
+        getCurrentModelMessages(chatModel);
+    final chatStream = OpenAI.instance.chat.createStream(
+      model: chatModel,
+      messages: modelMessages,
     );
-    messages.add(OpenAIChatCompletionChoiceMessageModel(
-      content: [
-        OpenAIChatCompletionChoiceMessageContentItemModel.text(
-          "",
-        )
-      ],
-      role: OpenAIChatMessageRole.assistant,
-    ));
+    var resModel = OpenAIChatCompletionChoiceMessageModel(content: [
+      OpenAIChatCompletionChoiceMessageContentItemModel.text(
+        "",
+      )
+    ], role: OpenAIChatMessageRole.assistant, name: chatModel);
+    setState(() {
+      if (messages[chatModel] != null) {
+        messages[chatModel]!.add(resModel);
+      }
+      orderedMessages.add(resModel);
+    });
     chatStream.listen(
       (streamChatCompletion) {
         final content = streamChatCompletion.choices.first.delta.content;
         content?.forEach((item) {
           if (item != null) {
+            modelMessages = getCurrentModelMessages(chatModel);
+
+            responseBuffer.write(item.text);
+            var mm = messages[chatModel]![modelMessages.length - 1] =
+                OpenAIChatCompletionChoiceMessageModel(content: [
+              OpenAIChatCompletionChoiceMessageContentItemModel.text(
+                responseBuffer.toString(),
+              )
+            ], role: OpenAIChatMessageRole.assistant, name: chatModel);
             setState(() {
-              responseBuffer.write(item.text);
-              messages[messages.length - 1] =
-                  OpenAIChatCompletionChoiceMessageModel(
-                content: [
-                  OpenAIChatCompletionChoiceMessageContentItemModel.text(
-                    responseBuffer.toString(),
-                  )
-                ],
-                role: OpenAIChatMessageRole.assistant,
-              );
+              orderedMessages[orderedMessages.length - 1] = mm;
+              if (messages[chatModel] != null) {
+                messages[chatModel]![modelMessages.length - 1] = mm;
+              }
             });
             if (autoScroll) {
               _scrollController
@@ -291,11 +378,19 @@ class _ChatPageState extends State<ChatPage> {
           done = true;
         });
         if (conversation != null) {
-          Message msg = Message(
+          Message userMsg = Message(
+              content: message,
+              conversationId: conversation!.id!,
+              role: 0,
+              model: model);
+          await Message.insertMessage(userMsg);
+
+          Message assistantMsg = Message(
               content: responseBuffer.toString(),
               conversationId: conversation!.id!,
-              role: 1);
-          await Message.insertMessage(msg);
+              role: 1,
+              model: chatModel);
+          await Message.insertMessage(assistantMsg);
         }
         responseBuffer.clear();
       },

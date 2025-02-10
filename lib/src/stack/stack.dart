@@ -73,7 +73,9 @@ class _AppStackState extends State<AppStack> with RouteAware {
     final bool? _canPop = _localNavigatorKey.currentState?.canPop();
     String? routeName = getCurrentRouteName(_localNavigatorKey);
     setState(() {
-      activeKey = ValueKey(routeName!);
+      if (routeName != null) {
+        activeKey = ValueKey(routeName);
+      }
     });
     if (_canPop != canPop && mounted) {
       setState(() {

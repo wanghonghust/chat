@@ -17,7 +17,7 @@ Future<Database> initDatabase() async {
       'CREATE TABLE conversations(id INTEGER PRIMARY KEY, title TEXT)',
     );
     await db.execute(
-        'CREATE TABLE messages(id INTEGER PRIMARY KEY, conversationId INTEGER, role INTEGER, content TEXT, FOREIGN KEY(conversationId) REFERENCES conversations(id))');
+        'CREATE TABLE messages(id INTEGER PRIMARY KEY, conversationId INTEGER, role INTEGER, model TEXT, content TEXT, FOREIGN KEY(conversationId) REFERENCES conversations(id))');
   });
   return db;
 }
