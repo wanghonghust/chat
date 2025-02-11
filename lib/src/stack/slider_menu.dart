@@ -52,7 +52,7 @@ class _SliderMenuState extends State<SliderMenu> {
           Divider(
             thickness: 1,
           ),
-          _buildBoottom(context)
+          _buildBottom(context)
         ],
       ),
     );
@@ -118,11 +118,12 @@ class _SliderMenuState extends State<SliderMenu> {
     return currentRouteName;
   }
 
-  Widget _buildBoottom(BuildContext context) {
+  Widget _buildBottom(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(left: 10, right: 10),
       height: 50,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircleAvatar(
             radius: 18,
@@ -138,7 +139,7 @@ class _SliderMenuState extends State<SliderMenu> {
             width: 20,
           ),
           Text(
-            'DeepSeek',
+            '智能助手',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.bold,
@@ -167,16 +168,20 @@ class _SliderMenuState extends State<SliderMenu> {
         ));
   }
 
-  Widget _buildHistory(BuildContext contextMenuButtonItems) {
+  Widget _buildHistory(BuildContext context) {
     return ListView.builder(
       itemBuilder: (context, index) {
+        String route =
+            "/chat:${widget.histories![index].id}:${widget.histories![index].title}";
         return InkWell(
           // borderRadius: BorderRadius.all(Radius.circular(5)),
           onTap: () {
-            widget.navigatorKey!.currentState?.pushNamed(
-                "/chat:${widget.histories![index].id}:${widget.histories![index].title}");
+            widget.navigatorKey!.currentState?.pushNamed(route);
           },
           child: Container(
+            color: widget.activeKey == ValueKey(route)
+                ? Theme.of(context).primaryColor
+                : null,
             padding: EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
             child: Text(
               widget.histories![index].title,

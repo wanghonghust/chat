@@ -7,8 +7,8 @@ import 'package:chat/src/pages/chat/select_widget.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+import 'package:expandable_menu/expandable_menu.dart';
 
 class ChatPage extends StatefulWidget {
   dynamic arguments;
@@ -47,6 +47,7 @@ class _ChatPageState extends State<ChatPage> {
   bool selectModel = false;
   final MaterialTextSelectionControls materialTextControls =
       MaterialTextSelectionControls();
+  final sliderValue = ValueNotifier<double>(0.5);
 
   @override
   void initState() {
@@ -82,6 +83,60 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    return _buildChat(context);
+  }
+
+  Widget _buildStarMenu(BuildContext context) {
+    bool isSmallScreen = MediaQuery.of(context).size.width < 600;
+    return Column(
+      children: [
+        ToggleButton(
+            icon: Icon(
+              Icons.emoji_objects,
+              size: 16,
+            ),
+            isSelected: think,
+            label: isSmallScreen ? null : Text("深度思考"),
+            onSelected: (value) {
+              setState(() {
+                think = value;
+              });
+            }),
+        ToggleButton(
+            icon: Icon(
+              Icons.wifi,
+              size: 16,
+            ),
+            isSelected: network,
+            label: isSmallScreen
+                ? null
+                : Text(
+                    "联网搜索",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+            onSelected: (value) {
+              setState(() {
+                network = value;
+              });
+            }),
+        ToggleButton(
+            icon: Icon(
+              Icons.import_export,
+              size: 16,
+            ),
+            isSelected: autoScroll,
+            label: isSmallScreen ? null : Text("自动滚动"),
+            onSelected: (value) {
+              setState(() {
+                autoScroll = value;
+              });
+            }),
+      ],
+    );
+  }
+
+  Widget _buildChat(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Column(
@@ -224,7 +279,41 @@ class _ChatPageState extends State<ChatPage> {
                           });
                         }),
                     SizedBox(width: 10),
-                    Expanded(child: _buildMenu(context, isSmallScreen)),
+                    Container(
+                      width: 200,
+                      height: 40,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                              top: 0.0,
+                              left: 0.0,
+                              right: 0.0,
+                              child: ExpandableMenu(
+                                width: 40.0,
+                                height: 40.0,
+                                items: [
+                                  Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                  ),
+                                  Icon(
+                                    Icons.access_alarm,
+                                    color: Colors.white,
+                                  ),
+                                  Icon(
+                                    Icons.accessible_forward,
+                                    color: Colors.white,
+                                  ),
+                                  Icon(
+                                    Icons.accessibility_new_sharp,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ))
+                        ],
+                      ),
+                    ),
+                    Expanded(child: _buildMenu(isSmallScreen)),
                   ],
                 ),
               ),
@@ -241,7 +330,7 @@ class _ChatPageState extends State<ChatPage> {
     ));
   }
 
-  Widget _buildMenu(BuildContext context, bool isSmallScreen) {
+  Widget _buildMenu(bool isSmallScreen) {
     ScrollController _scrollController = ScrollController();
     return Scrollbar(
         controller: _scrollController,
@@ -252,50 +341,34 @@ class _ChatPageState extends State<ChatPage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ToggleButton(
-                  icon: Icon(
-                    Icons.emoji_objects,
-                    size: 16,
-                  ),
-                  isSelected: think,
-                  label: isSmallScreen ? null : Text("深度思考"),
-                  onSelected: (value) {
-                    setState(() {
-                      think = value;
-                    });
-                  }),
-              SizedBox(width: 10),
-              ToggleButton(
-                  icon: Icon(
-                    Icons.wifi,
-                    size: 16,
-                  ),
-                  isSelected: network,
-                  label: isSmallScreen
-                      ? null
-                      : Text(
-                          "联网搜索",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+              Builder(
+                builder: (context) {
+                  return IconButton.filledTonal(
+                    onPressed: () {
+                      final RenderBox button =
+                          context.findRenderObject() as RenderBox;
+                      final RenderBox overlay = Overlay.of(context)
+                          .context
+                          .findRenderObject() as RenderBox;
+                      final RelativeRect position = RelativeRect.fromRect(
+                        Rect.fromPoints(
+                          button.localToGlobal(Offset(0, -130),
+                              ancestor: overlay),
+                          button.localToGlobal(Offset.zero, ancestor: overlay),
                         ),
-                  onSelected: (value) {
-                    setState(() {
-                      network = value;
-                    });
-                  }),
-              SizedBox(width: 10),
-              ToggleButton(
-                  icon: Icon(
-                    Icons.import_export,
-                    size: 16,
-                  ),
-                  isSelected: autoScroll,
-                  label: isSmallScreen ? null : Text("自动滚动"),
-                  onSelected: (value) {
-                    setState(() {
-                      autoScroll = value;
-                    });
-                  }),
+                        Offset.zero & overlay.size,
+                      );
+                      showMenu(
+                          context: context,
+                          position: position,
+                          items: <PopupMenuEntry>[
+                            PopupMenuItem(child: _buildStarMenu(context))
+                          ]);
+                    },
+                    icon: const Icon(Icons.grid_view),
+                  );
+                },
+              ),
             ],
           ),
         ));
@@ -310,9 +383,7 @@ class _ChatPageState extends State<ChatPage> {
       int id = await Conversation.insertConversation(con);
       conversation = Conversation(title: message, id: id);
       dataProvider.addConversation(conversation!);
-      setState(() {
-        
-      });
+      setState(() {});
     }
     setState(() {
       userMessage = message;
@@ -402,6 +473,29 @@ class _ChatPageState extends State<ChatPage> {
         }
         responseBuffer.clear();
       },
+    );
+  }
+}
+
+class IconMenu extends StatelessWidget {
+  const IconMenu({
+    required this.icon,
+    required this.text,
+    super.key,
+  });
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 32),
+        const SizedBox(height: 6),
+        Text(text),
+      ],
     );
   }
 }

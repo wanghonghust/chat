@@ -14,11 +14,9 @@ import 'package:chat/src/stack/window_buttons.dart';
 import 'package:chat/widgets/sidebar/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/macos/macos_blur_view_state.dart';
-import 'package:flutter_acrylic/window.dart';
-import 'package:flutter_acrylic/window_effect.dart';
 import 'package:provider/provider.dart';
 
-const String initialRoute = '/chat';
+String initialRoute = "/";
 
 class AppStack extends StatefulWidget {
   const AppStack({super.key});
@@ -31,35 +29,24 @@ class _AppStackState extends State<AppStack> with RouteAware {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<NavigatorState> _localNavigatorKey =
       GlobalKey<NavigatorState>();
-  WindowEffect effect = WindowEffect.mica;
-  Color color = Colors.transparent;
-  InterfaceBrightness brightness = InterfaceBrightness.dark;
   MacOSBlurViewState macOSBlurViewState =
       MacOSBlurViewState.followsWindowActiveState;
 
   final RouteObserver<ModalRoute<void>> routeObserver =
       RouteObserver<ModalRoute<void>>();
+  AppDataProvider? dataProvider;
+  ThemeNotifier? themeNotifier;
   bool? canPop = false;
-  Key? activeKey;
   @override
   void initState() {
     super.initState();
-    activeKey = ValueKey(initialRoute);
+
+    dataProvider = Provider.of<AppDataProvider>(context, listen: false);
+    themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
   }
-
-
 
   void updateUi() {
     setState(() {});
-  }
-
-  void setWindowEffect(WindowEffect? value, bool dark) {
-    Window.setEffect(
-      effect: value!,
-      color: color,
-      dark: dark,
-    );
-    setState(() => effect = value);
   }
 
   void _updateCanPop() {
@@ -67,7 +54,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
     String? routeName = getCurrentRouteName(_localNavigatorKey);
     setState(() {
       if (routeName != null) {
-        activeKey = ValueKey(routeName);
+        dataProvider!.setCurrentRoute(routeName);
       }
     });
     if (_canPop != canPop && mounted) {
@@ -81,8 +68,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     routeObserver.subscribe(this, ModalRoute.of(context)!);
-    ThemeNotifier themeNotifier = Provider.of<ThemeNotifier>(context);
-    setWindowEffect(effect, themeNotifier.isDarkMode);
+    themeNotifier!.init();
   }
 
   @override
@@ -92,26 +78,20 @@ class _AppStackState extends State<AppStack> with RouteAware {
   }
 
   @override
-  void didPush() {
-    print('MyPage was pushed');
-    // _updateCanPop();
-  }
+  void didPush() {}
 
   @override
   void didPopNext() {
-    print('MyPage was popped next');
     _updateCanPop();
   }
 
   @override
   void didPop() {
-    print('MyPage was popped');
     _updateCanPop();
   }
 
   @override
   void didPushNext() {
-    print('MyPage pushed next');
     _updateCanPop();
   }
 
@@ -119,7 +99,6 @@ class _AppStackState extends State<AppStack> with RouteAware {
   Widget build(BuildContext context) {
     bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
     bool isSmallScreen = MediaQuery.of(context).size.width < 600;
-    AppDataProvider dataProvider = Provider.of<AppDataProvider>(context);
     List<SidebarItem> items = [];
     routes.forEach((key, value) {
       items.add(SidebarItem(
@@ -129,14 +108,15 @@ class _AppStackState extends State<AppStack> with RouteAware {
         route: value.route,
       ));
     });
+    // print(dataProvider!.currentRoute);
     Widget sideMenu = SliderMenu(
       items: items,
-      histories: dataProvider.conversations,
-      activeKey: activeKey,
+      histories: dataProvider!.conversations,
+      activeKey: ValueKey(dataProvider!.currentRoute),
       navigatorKey: _localNavigatorKey,
     );
     bool showDrawer = isDesktop && isSmallScreen || !isDesktop;
-    ThemeNotifier themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return Scaffold(
       key: _scaffoldKey,
       appBar: isDesktop ? null : AppBar(),
@@ -187,7 +167,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
               width: 200,
               shape: RoundedRectangleBorder(),
               child: BlurryContainer(
-                color: themeNotifier.isDarkMode
+                color: themeNotifier!.isDarkMode
                     ? const Color.fromARGB(255, 29, 31, 45).withAlpha(200)
                     : const Color.fromARGB(255, 212, 218, 236).withAlpha(200),
                 child: sideMenu,
@@ -221,13 +201,27 @@ class _AppStackState extends State<AppStack> with RouteAware {
                 title: res[2],
               )
             : null;
-
+        // route = route == "/" ? "/chat" : route;
         builder = routes[route]?.builder ?? (_, __) => NotFoundPage();
-        return MaterialPageRoute(
+
+        return PageRouteBuilder(
           maintainState: true,
-          builder: (context) {
+          pageBuilder: (context, animation, secondaryAnimation) {
             routeObserver.subscribe(this, ModalRoute.of(context)!);
             return builder(context, arguments);
+          },
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.ease;
+
+            var tween =
+                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+            return SlideTransition(
+              position: animation.drive(tween),
+              child: child,
+            );
           },
           settings: settings,
         );

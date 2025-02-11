@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:chat/src/database/models/conversation.dart';
+import 'package:expandable_menu/expandable_menu.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,34 +17,35 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          children: [
-            OutlinedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/settings');
-                },
-                child: Text("Settings $count")),
-            OutlinedButton(
-                onPressed: () {
-                  var con = Conversation(
-                    title: 'Fido'
-                  );
-
-                  Conversation.insertConversation(con);
-                },
-                child: Text("Add")),
-            SelectableRegion(
-              selectionControls: materialTextControls,
-              focusNode: FocusNode(),
-              child: GestureDetector(
-                onTap: () {}, // 避免覆盖默认手势
-                behavior: HitTestBehavior.translucent,
-                child: Text('可点击且可选择的文本'),
-              ),
-            )
-          ],
-        ),
+      body: Stack(
+        children: [
+          Positioned(
+              top: 0.0,
+              left: 0.0,
+              right: 0.0,
+              child: ExpandableMenu(
+                width: 40.0,
+                height: 40.0,
+                items: [
+                  Icon(
+                    Icons.add,
+                    color: Colors.white,
+                  ),
+                  Icon(
+                    Icons.access_alarm,
+                    color: Colors.white,
+                  ),
+                  Icon(
+                    Icons.accessible_forward,
+                    color: Colors.white,
+                  ),
+                  Icon(
+                    Icons.accessibility_new_sharp,
+                    color: Colors.white,
+                  ),
+                ],
+              ))
+        ],
       ),
     );
   }

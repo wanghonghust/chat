@@ -10,28 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:provider/provider.dart';
 
-enum InterfaceBrightness {
-  light,
-  dark,
-  auto,
-}
 
-extension InterfaceBrightnessExtension on InterfaceBrightness {
-  bool getIsDark(BuildContext? context) {
-    if (this == InterfaceBrightness.light) return false;
-    if (this == InterfaceBrightness.auto) {
-      if (context == null) return true;
 
-      return MediaQuery.of(context).platformBrightness == Brightness.dark;
-    }
 
-    return true;
-  }
-
-  Color getForegroundColor(BuildContext? context) {
-    return getIsDark(context) ? Colors.white : Colors.black;
-  }
-}
 
 class SettingsPage extends StatefulWidget {
   SettingsPage({Key? key}) : super(key: key);
@@ -41,24 +22,16 @@ class SettingsPage extends StatefulWidget {
 }
 
 class SettingsPageState extends State<SettingsPage> {
-  WindowEffect effect = WindowEffect.mica;
-  Color color = Colors.transparent;
-  InterfaceBrightness brightness = InterfaceBrightness.dark;
   MacOSBlurViewState macOSBlurViewState =
       MacOSBlurViewState.followsWindowActiveState;
+  ThemeNotifier? themeNotifier ;
 
-  void setWindowEffect(WindowEffect? value, bool dark) {
-    Window.setEffect(effect: value!, color: color, dark: dark);
-    if (Platform.isMacOS) {
-      if (brightness != InterfaceBrightness.auto) {
-        Window.overrideMacOSBrightness(
-          dark: brightness == InterfaceBrightness.dark,
-        );
-      }
-    }
-    this.setState(() => this.effect = value);
+
+  @override
+  void initState() {
+    super.initState();
+    themeNotifier = Provider.of<ThemeNotifier>(context,listen: false);
   }
-
   /// Lets the madness begin! (macOS only.)
   ///
   /// This method plays a silly little effect that is achieved using visual
@@ -140,7 +113,6 @@ class SettingsPageState extends State<SettingsPage> {
                     child: Text(
                       'Sidebar',
                       style: TextStyle(
-                        color: brightness.getForegroundColor(context),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -154,7 +126,6 @@ class SettingsPageState extends State<SettingsPage> {
                       'This is an example of a sidebar that has been '
                       'implemented using the TransparentMacOSSidebar widget.',
                       style: TextStyle(
-                        color: brightness.getForegroundColor(context),
                       ),
                     ),
                   ),
@@ -167,7 +138,6 @@ class SettingsPageState extends State<SettingsPage> {
                       'Check out the sidebar_frame.dart file to see how it '
                       'has been implemented!',
                       style: TextStyle(
-                        color: brightness.getForegroundColor(context),
                       ),
                     ),
                   ),
@@ -181,7 +151,6 @@ class SettingsPageState extends State<SettingsPage> {
                       'Press the following button if you would like to see '
                       'some visual effect subview madness:',
                       style: TextStyle(
-                        color: brightness.getForegroundColor(context),
                       ),
                     ),
                   ),
@@ -251,7 +220,6 @@ class SettingsPageState extends State<SettingsPage> {
   }
 
   OverflowBar buildActionButtonBar(BuildContext context) {
-    ThemeNotifier themeNotifier = Provider.of<ThemeNotifier>(context);
     return OverflowBar(
       alignment: MainAxisAlignment.start,
       children: [
@@ -259,7 +227,7 @@ class SettingsPageState extends State<SettingsPage> {
           width: 320,
           padding: EdgeInsets.all(10),
           child: SegmentedButton<ThemeMode>(
-            selected: {themeNotifier.themeMode},
+            selected: {themeNotifier!.themeMode},
             segments: const <ButtonSegment<ThemeMode>>[
               ButtonSegment<ThemeMode>(
                   value: ThemeMode.system,
@@ -277,10 +245,7 @@ class SettingsPageState extends State<SettingsPage> {
             ],
             multiSelectionEnabled: false,
             onSelectionChanged: (Set<ThemeMode> selected) {
-              themeNotifier.setTheme(selected.first);
-
-              print(themeNotifier.isDarkMode);
-              setWindowEffect(effect, themeNotifier.isDarkMode);
+              themeNotifier!.setTheme(selected.first);
             },
           ),
         )
@@ -301,7 +266,6 @@ class SettingsPageState extends State<SettingsPage> {
             'macOS actions:',
             style: TextStyle(
               fontSize: 16.0,
-              color: brightness.getForegroundColor(context),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -313,7 +277,7 @@ class SettingsPageState extends State<SettingsPage> {
                 context: context,
                 builder: (_) {
                   return Theme(
-                    data: brightness.getIsDark(context)
+                    data: themeNotifier!.isDarkMode
                         ? ThemeData.dark()
                         : ThemeData.light(),
                     child: LayoutBuilder(builder: (_, constraints) {
@@ -679,7 +643,6 @@ class SettingsPageState extends State<SettingsPage> {
   }
 
   SingleChildScrollView buildEffectMenu(BuildContext context) {
-    ThemeNotifier themeNotifier = Provider.of<ThemeNotifier>(context);
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -695,102 +658,15 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 value: effect,
-                groupValue: this.effect,
+                groupValue: themeNotifier!.effect,
                 onChanged: (effect) {
-                  setWindowEffect(effect, themeNotifier.isDarkMode);
+                  themeNotifier!.setEffect(effect!);
                 },
               ),
             )
             .toList(),
       ),
     );
-  }
-}
-
-class WindowTitleBar extends StatelessWidget {
-  final InterfaceBrightness brightness;
-  const WindowTitleBar({super.key, required this.brightness});
-
-  @override
-  Widget build(BuildContext context) {
-    return Platform.isWindows
-        ? Container(
-            width: MediaQuery.of(context).size.width,
-            height: 32.0,
-            color: Colors.transparent,
-            child: MoveWindow(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Spacer(),
-                  MinimizeWindowButton(
-                    colors: WindowButtonColors(
-                      iconNormal: brightness == InterfaceBrightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      iconMouseDown: brightness == InterfaceBrightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      iconMouseOver: brightness == InterfaceBrightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      normal: Colors.transparent,
-                      mouseOver: brightness == InterfaceBrightness.light
-                          ? Colors.black.withOpacity(0.04)
-                          : Colors.white.withOpacity(0.04),
-                      mouseDown: brightness == InterfaceBrightness.light
-                          ? Colors.black.withOpacity(0.08)
-                          : Colors.white.withOpacity(0.08),
-                    ),
-                  ),
-                  MaximizeWindowButton(
-                    colors: WindowButtonColors(
-                      iconNormal: brightness == InterfaceBrightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      iconMouseDown: brightness == InterfaceBrightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      iconMouseOver: brightness == InterfaceBrightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      normal: Colors.transparent,
-                      mouseOver: brightness == InterfaceBrightness.light
-                          ? Colors.black.withOpacity(0.04)
-                          : Colors.white.withOpacity(0.04),
-                      mouseDown: brightness == InterfaceBrightness.light
-                          ? Colors.black.withOpacity(0.08)
-                          : Colors.white.withOpacity(0.08),
-                    ),
-                  ),
-                  CloseWindowButton(
-                    onPressed: () {
-                      appWindow.close();
-                    },
-                    colors: WindowButtonColors(
-                      iconNormal: brightness == InterfaceBrightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      iconMouseDown: brightness == InterfaceBrightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      iconMouseOver: brightness == InterfaceBrightness.light
-                          ? Colors.black
-                          : Colors.white,
-                      normal: Colors.transparent,
-                      mouseOver: brightness == InterfaceBrightness.light
-                          ? Colors.black.withOpacity(0.04)
-                          : Colors.white.withOpacity(0.04),
-                      mouseDown: brightness == InterfaceBrightness.light
-                          ? Colors.black.withOpacity(0.08)
-                          : Colors.white.withOpacity(0.08),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        : Container();
   }
 }
 

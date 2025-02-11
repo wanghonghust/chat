@@ -22,15 +22,15 @@ class RouteItem {
 }
 
 Map<String, RouteItem> routes = {
-  // '/': RouteItem(
-  //   route: '/',
-  //   title: 'Home',
-  //   icon: Icons.home,
-  //   builder: (context,arguments) => HomePage(),
-  //   onTap: (context) => {
-  //     Navigator.pushNamed(context, '/'),
-  //   },
-  // ),
+  '/': RouteItem(
+    route: '/',
+    title: 'Home',
+    icon: Icons.home,
+    builder: (context,arguments) => HomePage(),
+    onTap: (context) => {
+      Navigator.pushNamed(context, '/'),
+    },
+  ),
   '/chat': RouteItem(
     route: '/chat',
     title: 'Chat',

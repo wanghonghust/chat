@@ -257,6 +257,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.7"
+  expandable_menu:
+    dependency: "direct main"
+    description:
+      name: expandable_menu
+      sha256: "0a56238179c7a177baabea1bac159547abb13c6b801179e53e4c9cf02057e032"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.0.5"
   fake_async:
     dependency: transitive
     description:
@@ -661,6 +669,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.5.1"
+  popover:
+    dependency: "direct main"
+    description:
+      name: popover
+      sha256: "0606f3e10f92fc0459f5c52fd917738c29e7552323b28694d50c2d3312d0e1a2"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.3.1"
   provider:
     dependency: "direct main"
     description:

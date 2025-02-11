@@ -26,10 +26,12 @@ Future<void> main() async {
 
   List<Conversation> histories = await Conversation.getConversations();
   runApp(MultiProvider(providers: [
-    ChangeNotifierProvider(
-        create: (context) =>
-            ThemeNotifier(lightTheme, context, ThemeMode.system)),
-    ChangeNotifierProvider(create: (_) => AppDataProvider(histories))
+    ChangeNotifierProvider(create: (context) {
+      ThemeNotifier notifier =
+          ThemeNotifier(lightTheme, context, ThemeMode.system);
+      return notifier;
+    }),
+    ChangeNotifierProvider(create: (_) => AppDataProvider(histories, "/"))
   ], child: MyApp()));
   if (Platform.isWindows) {
     doWhenWindowReady(() {
