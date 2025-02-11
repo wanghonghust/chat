@@ -17,7 +17,7 @@ class _SelectWidgetState extends State<SelectWidget> {
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       color: const Color.fromARGB(199, 167, 167, 167),
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(5),
       onSelected: (String value) {
         setState(() {
           isSelecting = false;
@@ -42,14 +42,14 @@ class _SelectWidgetState extends State<SelectWidget> {
       child: Container(
           decoration: BoxDecoration(
               color: Theme.of(context).hoverColor,
-              borderRadius: BorderRadius.circular(18)),
-          padding: EdgeInsets.only(right: 10, left: 10, top: 5, bottom: 5),
+              borderRadius: BorderRadius.circular(5)),
+          padding: EdgeInsets.only(right: 8, left: 8, top: 5, bottom: 5),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Text(
               widget.value ?? "",
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 12),
             ),
-            Icon(isSelecting ? Icons.arrow_drop_up : Icons.arrow_drop_down)
+            Icon(isSelecting ? Icons.arrow_drop_up : Icons.arrow_drop_down,size: 12,)
           ])),
     );
   }

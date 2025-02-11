@@ -1,13 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<Database> initDatabase() async {
   WidgetsFlutterBinding.ensureInitialized();
-  sqfliteFfiInit();
-
-  databaseFactory = databaseFactoryFfi;
+  if (Platform.isMacOS || Platform.isWindows) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   var databasesPath = await getDatabasesPath();
   String path = join(databasesPath, 'data.db');
   Database db = await openDatabase(path, version: 1,

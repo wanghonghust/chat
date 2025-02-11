@@ -7,7 +7,6 @@ import 'package:chat/src/data_provider/index.dart';
 import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/pages/not_found/index.dart';
 import 'package:chat/src/pages/settings/controller.dart';
-import 'package:chat/src/pages/settings/settings_view.dart';
 import 'package:chat/src/stack/blur_container.dart';
 import 'package:chat/src/stack/slider_menu.dart';
 import 'package:chat/src/stack/window_buttons.dart';
@@ -40,8 +39,6 @@ class _AppStackState extends State<AppStack> with RouteAware {
   @override
   void initState() {
     super.initState();
-
-    dataProvider = Provider.of<AppDataProvider>(context, listen: false);
     themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
   }
 
@@ -68,6 +65,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     routeObserver.subscribe(this, ModalRoute.of(context)!);
+    dataProvider = Provider.of<AppDataProvider>(context, listen: true);
     themeNotifier!.init();
   }
 
@@ -167,6 +165,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
               width: 200,
               shape: RoundedRectangleBorder(),
               child: BlurryContainer(
+                padding: EdgeInsets.all(0),
                 color: themeNotifier!.isDarkMode
                     ? const Color.fromARGB(255, 29, 31, 45).withAlpha(200)
                     : const Color.fromARGB(255, 212, 218, 236).withAlpha(200),

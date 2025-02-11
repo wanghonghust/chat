@@ -2,13 +2,13 @@ import 'package:chat/env/env.dart';
 import 'package:chat/src/data_provider/index.dart';
 import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/database/models/message.dart';
+import 'package:chat/src/pages/chat/icon_button.dart';
 import 'package:chat/src/pages/chat/markodwn_widget.dart';
 import 'package:chat/src/pages/chat/select_widget.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:expandable_menu/expandable_menu.dart';
 
 class ChatPage extends StatefulWidget {
   dynamic arguments;
@@ -87,46 +87,54 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildStarMenu(BuildContext context) {
-    bool isSmallScreen = MediaQuery.of(context).size.width < 600;
-    return Column(
+    return Row(
       children: [
         ToggleButton(
             icon: Icon(
               Icons.emoji_objects,
-              size: 16,
+              size: 12,
             ),
             isSelected: think,
-            label: isSmallScreen ? null : Text("深度思考"),
+            label: Text(
+              "思考",
+              style: TextStyle(fontSize: 12),
+            ),
             onSelected: (value) {
               setState(() {
                 think = value;
               });
             }),
+        SizedBox(
+          width: 10,
+        ),
         ToggleButton(
             icon: Icon(
               Icons.wifi,
-              size: 16,
+              size: 8,
             ),
             isSelected: network,
-            label: isSmallScreen
-                ? null
-                : Text(
-                    "联网搜索",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+            label: Text(
+              "联网",
+              style: TextStyle(fontSize: 12),
+            ),
             onSelected: (value) {
               setState(() {
                 network = value;
               });
             }),
+        SizedBox(
+          width: 10,
+        ),
         ToggleButton(
             icon: Icon(
               Icons.import_export,
-              size: 16,
+              size: 12,
             ),
             isSelected: autoScroll,
-            label: isSmallScreen ? null : Text("自动滚动"),
+            label: Text(
+              "滚动",
+              style: TextStyle(fontSize: 12),
+            ),
             onSelected: (value) {
               setState(() {
                 autoScroll = value;
@@ -199,8 +207,8 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildChatBubble(Widget child, String? model) {
     Widget mesageWidget = Container(
-      margin: EdgeInsets.all(10),
-      padding: EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 5),
+      margin: EdgeInsets.all(5),
+      padding: EdgeInsets.all(5),
       decoration: BoxDecoration(
           color: Theme.of(context).hoverColor,
           borderRadius: BorderRadius.circular(5)),
@@ -231,106 +239,78 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildChatInput(BuildContext context, BoxConstraints constraints) {
-    bool isSmallScreen = MediaQuery.of(context).size.width < 600;
-    return IntrinsicHeight(
-        child: Container(
-      margin: EdgeInsets.all(20),
-      padding: EdgeInsets.all(10),
-      width: constraints.maxWidth,
-      constraints: BoxConstraints(maxHeight: 250),
-      decoration: BoxDecoration(
-          color: Theme.of(context).hoverColor,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(50), // 阴影的颜色
-              offset: Offset(0.8, 0.8), // 阴影与容器的距离
-              blurRadius: 0.5, // 高斯的标准偏差与盒子的形状卷积。
-              spreadRadius: 0.0, // 在应用模糊之前，框应该膨胀的量。
-            )
-          ]),
-      child: Column(
-        children: [
-          Expanded(
-              child: TextField(
-            controller: textEditingController,
-            decoration: InputDecoration(
-                fillColor: Colors.transparent,
-                focusColor: Colors.transparent,
-                hoverColor: Colors.transparent,
-                hintText: "给ChatGpt发送消息",
-                border: InputBorder.none),
-            keyboardType: TextInputType.multiline,
-            maxLines: null,
-          )),
-          SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    SelectWidget(
-                        value: model,
-                        items: models,
-                        onSelected: (value) {
-                          setState(() {
-                            model = value;
-                          });
-                        }),
-                    SizedBox(width: 10),
-                    Container(
-                      width: 200,
-                      height: 40,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                              top: 0.0,
-                              left: 0.0,
-                              right: 0.0,
-                              child: ExpandableMenu(
-                                width: 40.0,
-                                height: 40.0,
-                                items: [
-                                  Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                  ),
-                                  Icon(
-                                    Icons.access_alarm,
-                                    color: Colors.white,
-                                  ),
-                                  Icon(
-                                    Icons.accessible_forward,
-                                    color: Colors.white,
-                                  ),
-                                  Icon(
-                                    Icons.accessibility_new_sharp,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ))
-                        ],
-                      ),
-                    ),
-                    Expanded(child: _buildMenu(isSmallScreen)),
-                  ],
-                ),
-              ),
-              SizedBox(width: 10),
-              ElevatedButton.icon(
-                onPressed: done ? sendMessage : null,
-                label: Text('发送'),
-                icon: Icon(Icons.send),
+    return Stack(children: [
+      IntrinsicHeight(
+          child: Container(
+        margin: EdgeInsets.all(10),
+        padding: EdgeInsets.only(left: 10, right: 10, top: 25, bottom: 5),
+        width: constraints.maxWidth,
+        constraints: BoxConstraints(maxHeight: 250),
+        decoration: BoxDecoration(
+            color: Theme.of(context).hoverColor,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(50), // 阴影的颜色
+                offset: Offset(0.8, 0.8), // 阴影与容器的距离
+                blurRadius: 0.5, // 高斯的标准偏差与盒子的形状卷积。
+                spreadRadius: 0.0, // 在应用模糊之前，框应该膨胀的量。
               )
-            ],
-          )
-        ],
-      ),
-    ));
+            ]),
+        child: Column(
+          children: [
+            Expanded(
+                child: TextField(
+              controller: textEditingController,
+              decoration: InputDecoration(
+                  fillColor: Colors.transparent,
+                  focusColor: Colors.transparent,
+                  hoverColor: Colors.transparent,
+                  hintText: "给ChatGpt发送消息",
+                  border: InputBorder.none),
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+            )),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: _buildStarMenu(context),
+                ),
+                SizedBox(width: 10),
+                MyIconButton(
+                  onTap: done ? sendMessage : null,
+                  label: Text(
+                    '发送',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  icon: Icon(
+                    Icons.send,
+                    size: 12,
+                  ),
+                )
+              ],
+            )
+          ],
+        ),
+      )),
+      Positioned(
+        left: 25,
+        top: 25,
+        child: SelectWidget(
+            value: model,
+            items: models,
+            onSelected: (value) {
+              setState(() {
+                model = value;
+              });
+            }),
+      )
+    ]);
   }
 
-  Widget _buildMenu(bool isSmallScreen) {
+  Widget _buildMenu() {
     ScrollController _scrollController = ScrollController();
     return Scrollbar(
         controller: _scrollController,

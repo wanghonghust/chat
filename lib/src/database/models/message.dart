@@ -1,5 +1,5 @@
 import 'package:chat/src/database/index.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class Message {
   final int? id;

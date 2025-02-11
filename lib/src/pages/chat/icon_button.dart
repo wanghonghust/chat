@@ -1,41 +1,28 @@
 import 'package:flutter/material.dart';
 
-class ToggleButton extends StatefulWidget {
-  Widget? icon;
-  Widget? label;
-  final bool? isSelected;
-  final Function(bool)? onSelected;
+class MyIconButton extends StatefulWidget {
+  Widget icon;
+  Widget label;
+  final Function()? onTap;
 
-  ToggleButton({
+  MyIconButton({
     super.key,
-    this.icon,
-    this.label,
-    this.isSelected,
-    this.onSelected,
-  }) {
-    assert(icon != null || label != null);
-  }
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
 
   @override
-  _ToggleButtonState createState() => _ToggleButtonState();
+  _MyIconButtonState createState() => _MyIconButtonState();
 }
 
-class _ToggleButtonState extends State<ToggleButton> {
-  bool _isSelected = false;
+class _MyIconButtonState extends State<MyIconButton> {
   bool _isHovered = false;
 
   @override
-  void initState() {
-    super.initState();
-    _isSelected = widget.isSelected ?? false;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    Color color = _isSelected
-        ? Theme.of(context).primaryColor
-        : Theme.of(context).buttonTheme.colorScheme!.onPrimary;
-    if (_isHovered) {
+    Color color = Theme.of(context).primaryColor;
+    if (_isHovered || widget.onTap == null) {
       color = Theme.of(context).hoverColor;
     }
     return Container(
@@ -55,14 +42,13 @@ class _ToggleButtonState extends State<ToggleButton> {
             _isHovered = value;
           });
         },
-        onTap: () {
-          setState(() {
-            _isSelected = !_isSelected;
-          });
-          if (widget.onSelected != null) {
-            widget.onSelected!(_isSelected);
-          }
-        },
+        onTap: widget.onTap != null
+            ? () {
+                if (widget.onTap != null) {
+                  widget.onTap!();
+                }
+              }
+            : null,
         child: Padding(
             padding: EdgeInsets.only(top: 2, bottom: 2),
             child: Row(
