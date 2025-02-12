@@ -6,6 +6,7 @@ import 'package:chat/src/pages/chat/icon_button.dart';
 import 'package:chat/src/pages/chat/markodwn_widget.dart';
 import 'package:chat/src/pages/chat/select_widget.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
+import 'package:chat/src/pages/home/index.dart';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -87,7 +88,15 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildStarMenu(BuildContext context) {
-    return Row(
+    return ExpandableContainer(
+      expandedIcon: Icon(
+        Icons.drag_handle,
+        size: 24,
+      ),
+      collapsedIcon: Icon(
+        Icons.remove,
+        size: 24,
+      ),
       children: [
         ToggleButton(
             icon: Icon(
@@ -96,7 +105,7 @@ class _ChatPageState extends State<ChatPage> {
             ),
             isSelected: think,
             label: Text(
-              "思考",
+              "推理",
               style: TextStyle(fontSize: 12),
             ),
             onSelected: (value) {
@@ -114,7 +123,7 @@ class _ChatPageState extends State<ChatPage> {
             ),
             isSelected: network,
             label: Text(
-              "联网",
+              "搜索",
               style: TextStyle(fontSize: 12),
             ),
             onSelected: (value) {
@@ -273,11 +282,9 @@ class _ChatPageState extends State<ChatPage> {
             )),
             SizedBox(height: 10),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _buildStarMenu(context),
-                ),
+                Expanded(child: _buildStarMenu(context)),
                 SizedBox(width: 10),
                 MyIconButton(
                   onTap: done ? sendMessage : null,
@@ -296,8 +303,8 @@ class _ChatPageState extends State<ChatPage> {
         ),
       )),
       Positioned(
-        left: 25,
-        top: 25,
+        left: 15,
+        top: 15,
         child: SelectWidget(
             value: model,
             items: models,
@@ -363,6 +370,7 @@ class _ChatPageState extends State<ChatPage> {
       int id = await Conversation.insertConversation(con);
       conversation = Conversation(title: message, id: id);
       dataProvider.addConversation(conversation!);
+      dataProvider.setCurrentRoute("/chat:$id:${con.title}");
       setState(() {});
     }
     setState(() {

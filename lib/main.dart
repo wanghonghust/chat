@@ -9,10 +9,12 @@ import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/settings/theme.dart';
 import 'package:chat/src/stack/stack.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
+  // debugPaintSizeEnabled = true;
   initDatabase();
   WidgetsFlutterBinding.ensureInitialized();
   if (!Platform.isAndroid && !Platform.isIOS) {
@@ -36,7 +38,7 @@ Future<void> main() async {
   if (Platform.isWindows) {
     doWhenWindowReady(() {
       appWindow
-        ..minSize = Size(400, 360)
+        ..minSize = Size(250, 360)
         ..size = Size(1000, 540)
         ..alignment = Alignment.center
         ..show();
