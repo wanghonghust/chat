@@ -168,8 +168,11 @@ class _AppStackState extends State<AppStack> with RouteAware {
                 padding: EdgeInsets.all(0),
                 color: themeNotifier!.isDarkMode
                     ? const Color.fromARGB(255, 29, 31, 45).withAlpha(200)
-                    : const Color.fromARGB(255, 212, 218, 236).withAlpha(200),
-                child: sideMenu,
+                    : Colors.white.withAlpha(250),
+                child: Padding(
+                  padding: EdgeInsets.only(top: 30),
+                  child: sideMenu,
+                ),
               ))
           : null,
     );

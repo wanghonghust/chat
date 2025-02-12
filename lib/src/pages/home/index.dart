@@ -76,17 +76,19 @@ class _ExpandContainerState extends State<ExpandableContainer> {
               color: Theme.of(context).hoverColor,
             ),
             child: AnimatedSize(
+              alignment: Alignment.centerLeft,
               duration: Duration(milliseconds: 200),
               child: Row(
-                // mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   GestureDetector(
                     child: Padding(
                       padding: EdgeInsets.all(5),
                       child: _expand
-                          ? widget.collapsedIcon ?? Icon(Icons.remove)
-                          : widget.expandedIcon ?? Icon(Icons.drag_handle),
+                          ? widget.collapsedIcon ??
+                              Icon(Icons.keyboard_arrow_left)
+                          : widget.expandedIcon ?? Icon(Icons.grid_view),
                     ),
                     onTap: () {
                       setState(() {
@@ -95,11 +97,13 @@ class _ExpandContainerState extends State<ExpandableContainer> {
                     },
                   ),
                   if (_expand)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.min,
-                      children: widget.children,
-                    ),
+                    Padding(
+                        padding: EdgeInsets.only(left: 5, right: 5),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisSize: MainAxisSize.min,
+                          children: widget.children,
+                        )),
                 ],
               ),
             )));

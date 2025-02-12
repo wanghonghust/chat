@@ -7,6 +7,7 @@ import 'package:chat/src/pages/chat/markodwn_widget.dart';
 import 'package:chat/src/pages/chat/select_widget.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:chat/src/pages/home/index.dart';
+import 'package:chat/src/pages/settings/controller.dart';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -89,12 +90,13 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildStarMenu(BuildContext context) {
     return ExpandableContainer(
+      expand: true,
       expandedIcon: Icon(
-        Icons.drag_handle,
+        Icons.grid_view,
         size: 24,
       ),
       collapsedIcon: Icon(
-        Icons.remove,
+        Icons.keyboard_arrow_left,
         size: 24,
       ),
       children: [
@@ -248,6 +250,8 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildChatInput(BuildContext context, BoxConstraints constraints) {
+    ThemeNotifier themeNotifier =
+        Provider.of<ThemeNotifier>(context, listen: false);
     return Stack(children: [
       IntrinsicHeight(
           child: Container(
@@ -256,16 +260,19 @@ class _ChatPageState extends State<ChatPage> {
         width: constraints.maxWidth,
         constraints: BoxConstraints(maxHeight: 250),
         decoration: BoxDecoration(
-            color: Theme.of(context).hoverColor,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(50), // 阴影的颜色
-                offset: Offset(0.8, 0.8), // 阴影与容器的距离
-                blurRadius: 0.5, // 高斯的标准偏差与盒子的形状卷积。
-                spreadRadius: 0.0, // 在应用模糊之前，框应该膨胀的量。
-              )
-            ]),
+          color: themeNotifier.isDarkMode
+              ? Theme.of(context).hoverColor
+              : Colors.white.withAlpha(216),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(50), // 阴影的颜色
+              offset: Offset(0.8, 0.8), // 阴影与容器的距离
+              blurRadius: 0.5, // 高斯的标准偏差与盒子的形状卷积。
+              spreadRadius: 0.0, // 在应用模糊之前，框应该膨胀的量。
+            )
+          ],
+        ),
         child: Column(
           children: [
             Expanded(
