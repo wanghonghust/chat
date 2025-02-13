@@ -122,7 +122,7 @@ class _ChatPageState extends State<ChatPage> {
               });
             }),
         SizedBox(
-          width: 10,
+          width: 5,
         ),
         ToggleButton(
             icon: Icon(
@@ -140,7 +140,7 @@ class _ChatPageState extends State<ChatPage> {
               });
             }),
         SizedBox(
-          width: 10,
+          width: 5,
         ),
         ToggleButton(
             icon: Icon(
@@ -379,7 +379,7 @@ class _ChatPageState extends State<ChatPage> {
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(5),
                   color: themeNotifier.isDarkMode
-                      ? Theme.of(context).hoverColor
+                      ? Colors.black.withAlpha(200)
                       : null),
               offset: const Offset(0, 0),
               scrollbarTheme: ScrollbarThemeData(
@@ -513,8 +513,8 @@ class _ChatPageState extends State<ChatPage> {
               orderedMessages[orderedMessages.length - 1] = mm;
             });
             if (autoScroll) {
-              _scrollController
-                  .jumpTo(_scrollController.position.maxScrollExtent);
+              _msgScrollController
+                  .jumpTo(_msgScrollController.position.maxScrollExtent);
             }
           }
         });

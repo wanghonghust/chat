@@ -214,7 +214,8 @@ class _HomePageState extends State<HomePage> {
       child: TabBar(
         labelColor: Colors.redAccent,
         unselectedLabelColor: Colors.white,
-        indicatorSize: TabBarIndicatorSize.label,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicatorPadding: EdgeInsets.zero,
         indicator: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(

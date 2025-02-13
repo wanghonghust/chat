@@ -38,6 +38,7 @@ class _SliderMenuState extends State<SliderMenu> {
           if (widget.histories != null) Expanded(child: _buildHistory(context)),
           Divider(
             thickness: 1,
+            height: 1,
           ),
           SizedBox(
             height: 200,
@@ -67,7 +68,7 @@ class _SliderMenuState extends State<SliderMenu> {
             color: active ? primaryColor : Colors.transparent,
             borderRadius: BorderRadius.circular(5)),
         duration: Duration(milliseconds: 300),
-        height: 42,
+        height: 36,
         child: InkWell(
           borderRadius: BorderRadius.circular(5),
           onTap: () {
