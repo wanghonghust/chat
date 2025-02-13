@@ -2,15 +2,23 @@ import 'package:chat/env/env.dart';
 import 'package:chat/src/data_provider/index.dart';
 import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/database/models/message.dart';
+import 'package:chat/src/pages/chat/expandable_panel.dart';
 import 'package:chat/src/pages/chat/icon_button.dart';
 import 'package:chat/src/pages/chat/markodwn_widget.dart';
-import 'package:chat/src/pages/chat/select_widget.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:chat/src/pages/home/index.dart';
 import 'package:chat/src/pages/settings/controller.dart';
 import 'package:dart_openai/dart_openai.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
+const Map<String, String> supportModels = {
+  "qwen-plus": "通义千问 Plus",
+  "deepseek-r1": "DeepSeek R1",
+  "deepseek-v3": "DeepSeek V3",
+};
 
 class ChatPage extends StatefulWidget {
   dynamic arguments;
@@ -21,28 +29,15 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   Conversation? conversation;
-  String model = "qwen-plus";
-  List<PopupMenuItem<String>> models = [
-    PopupMenuItem(
-      value: "qwen-plus",
-      child: Text("通义千问 Plus"),
-    ),
-    PopupMenuItem(
-      value: "deepseek-r1",
-      child: Text("DeepSeek R1"),
-    ),
-    PopupMenuItem(
-      value: "deepseek-v3",
-      child: Text("DeepSeek V3"),
-    )
-  ];
-
+  String? model = "qwen-plus";
+  List<DropdownMenuItem<String>> models = [];
   List<Widget> items = [];
   bool done = true;
   List<OpenAIChatCompletionChoiceMessageModel> orderedMessages = [];
   String userMessage = "";
   TextEditingController textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _msgScrollController = ScrollController();
   bool think = false;
   bool network = false;
   bool autoScroll = true;
@@ -50,10 +45,21 @@ class _ChatPageState extends State<ChatPage> {
   final MaterialTextSelectionControls materialTextControls =
       MaterialTextSelectionControls();
   final sliderValue = ValueNotifier<double>(0.5);
-
+  bool expand = false;
   @override
   void initState() {
     super.initState();
+    supportModels.forEach((k, v) {
+      models.add(DropdownMenuItem(
+        value: k,
+        child: Text(
+          v,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 12),
+        ),
+      ));
+    });
     if (widget.arguments != null) {
       conversation = widget.arguments as Conversation;
       fetchData();
@@ -151,6 +157,14 @@ class _ChatPageState extends State<ChatPage> {
                 autoScroll = value;
               });
             }),
+        GestureDetector(
+          child: Icon(Icons.add),
+          onTap: () {
+            setState(() {
+              expand = !expand;
+            });
+          },
+        )
       ],
     );
   }
@@ -164,7 +178,9 @@ class _ChatPageState extends State<ChatPage> {
                 padding: EdgeInsets.only(left: 20, right: 20),
                 child: Text(
                   conversation?.title ?? "Chat",
+                  maxLines: 1,
                   style: TextStyle(
+                    overflow: TextOverflow.ellipsis,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -172,7 +188,7 @@ class _ChatPageState extends State<ChatPage> {
             Expanded(
               child: orderedMessages.isNotEmpty
                   ? ListView.builder(
-                      controller: _scrollController,
+                      controller: _msgScrollController,
                       itemBuilder: (context, index) {
                         final String content =
                             orderedMessages[index].content![0].text!;
@@ -233,15 +249,20 @@ class _ChatPageState extends State<ChatPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: EdgeInsets.only(left: 10, right: 10),
-                  child: Chip(
-                      shape: StadiumBorder(),
-                      backgroundColor: Colors.transparent,
-                      padding: EdgeInsets.all(0),
-                      label: Text(
-                        model,
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      )),
+                  padding: EdgeInsets.only(left: 5, right: 5),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).hoverColor,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      supportModels[model] ?? model,
+                      style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
                 mesageWidget
               ],
@@ -254,73 +275,126 @@ class _ChatPageState extends State<ChatPage> {
         Provider.of<ThemeNotifier>(context, listen: false);
     return Stack(children: [
       IntrinsicHeight(
-          child: Container(
-        margin: EdgeInsets.all(10),
-        padding: EdgeInsets.only(left: 10, right: 10, top: 25, bottom: 5),
-        width: constraints.maxWidth,
-        constraints: BoxConstraints(maxHeight: 250),
-        decoration: BoxDecoration(
-          color: themeNotifier.isDarkMode
-              ? Theme.of(context).hoverColor
-              : Colors.white.withAlpha(216),
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(50), // 阴影的颜色
-              offset: Offset(0.8, 0.8), // 阴影与容器的距离
-              blurRadius: 0.5, // 高斯的标准偏差与盒子的形状卷积。
-              spreadRadius: 0.0, // 在应用模糊之前，框应该膨胀的量。
-            )
-          ],
-        ),
-        child: Column(
-          children: [
-            Expanded(
-                child: TextField(
-              controller: textEditingController,
-              decoration: InputDecoration(
-                  fillColor: Colors.transparent,
-                  focusColor: Colors.transparent,
-                  hoverColor: Colors.transparent,
-                  hintText: "给ChatGpt发送消息",
-                  border: InputBorder.none),
-              keyboardType: TextInputType.multiline,
-              maxLines: null,
-            )),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Expanded(child: _buildStarMenu(context)),
-                SizedBox(width: 10),
-                MyIconButton(
-                  onTap: done ? sendMessage : null,
-                  label: Text(
-                    '发送',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  icon: Icon(
-                    Icons.send,
-                    size: 12,
-                  ),
-                )
-              ],
-            )
-          ],
-        ),
-      )),
+          child: AnimatedSize(
+              duration: Duration(milliseconds: 200),
+              child: Container(
+                margin: EdgeInsets.all(10),
+                padding:
+                    EdgeInsets.only(left: 10, right: 10, top: 25, bottom: 5),
+                width: constraints.maxWidth,
+                constraints: BoxConstraints(maxHeight: 250),
+                decoration: BoxDecoration(
+                  color: themeNotifier.isDarkMode
+                      ? Theme.of(context).hoverColor
+                      : Colors.white.withAlpha(216),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(50), // 阴影的颜色
+                      offset: Offset(0.8, 0.8), // 阴影与容器的距离
+                      blurRadius: 0.5, // 高斯的标准偏差与盒子的形状卷积。
+                      spreadRadius: 0.0, // 在应用模糊之前，框应该膨胀的量。
+                    )
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Expanded(
+                        child: TextField(
+                      onChanged: (value) {
+                        setState(() {
+                          userMessage = value.trim();
+                        });
+                      },
+                      controller: textEditingController,
+                      style: TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                          fillColor: Colors.transparent,
+                          focusColor: Colors.transparent,
+                          hoverColor: Colors.transparent,
+                          hintText: "给智能助手发送消息",
+                          border: InputBorder.none),
+                      keyboardType: TextInputType.multiline,
+                      maxLines: null,
+                    )),
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Expanded(child: _buildStarMenu(context)),
+                        SizedBox(width: 10),
+                        ElevatedButton.icon(
+                          onPressed: done && userMessage.isNotEmpty
+                              ? sendMessage
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            minimumSize: Size(65, 30), // 设置按钮的宽度和高度
+                          ),
+                          icon: Icon(Icons.send),
+                          label: Text('发送'),
+                        )
+                      ],
+                    ),
+                    ExpandablePanel(
+                      expand: expand,
+                      child:
+                          SelectableText.rich(TextSpan(text: "asdasdasdasd")),
+                    )
+                  ],
+                ),
+              ))),
       Positioned(
         left: 15,
         top: 15,
-        child: SelectWidget(
-            value: model,
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton2<String>(
+            isExpanded: true,
             items: models,
-            onSelected: (value) {
+            value: model,
+            onChanged: (value) {
               setState(() {
                 model = value;
               });
-            }),
-      )
+            },
+            buttonStyleData: ButtonStyleData(
+              height: 26,
+              width: 110,
+              padding: const EdgeInsets.only(left: 5, right: 5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                color: Theme.of(context).hoverColor,
+              ),
+              // elevation: 2,
+            ),
+            iconStyleData: const IconStyleData(
+                icon: Icon(
+                  Icons.expand_more,
+                ),
+                iconSize: 14,
+                openMenuIcon: Icon(Icons.expand_less)),
+            dropdownStyleData: DropdownStyleData(
+              maxHeight: 200,
+              width: 110,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  color: themeNotifier.isDarkMode
+                      ? Theme.of(context).hoverColor
+                      : null),
+              offset: const Offset(0, 0),
+              scrollbarTheme: ScrollbarThemeData(
+                radius: const Radius.circular(40),
+                thickness: WidgetStateProperty.all(6),
+                thumbVisibility: WidgetStateProperty.all(true),
+              ),
+            ),
+            menuItemStyleData: const MenuItemStyleData(
+              height: 30,
+              padding: EdgeInsets.only(left: 10, right: 10),
+            ),
+          ),
+        ),
+      ),
     ]);
   }
 
@@ -371,17 +445,15 @@ class _ChatPageState extends State<ChatPage> {
   void sendMessage() async {
     AppDataProvider dataProvider =
         Provider.of<AppDataProvider>(context, listen: false);
-    String message = textEditingController.text;
-    if (conversation == null) {
-      Conversation con = Conversation(title: message);
+    if (conversation == null && userMessage.trim().isNotEmpty) {
+      Conversation con = Conversation(title: userMessage);
       int id = await Conversation.insertConversation(con);
-      conversation = Conversation(title: message, id: id);
+      conversation = Conversation(title: userMessage, id: id);
       dataProvider.addConversation(conversation!);
       dataProvider.setCurrentRoute("/chat:$id:${con.title}");
       setState(() {});
     }
     setState(() {
-      userMessage = message;
       textEditingController.clear();
       if (userMessage.trim().isNotEmpty) {
         items.add(_buildChatBubble(Text(userMessage), null));
@@ -391,7 +463,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> chat(String message) async {
-    String chatModel = model;
+    String chatModel = model!;
     setState(() {
       done = false;
     });
@@ -456,7 +528,7 @@ class _ChatPageState extends State<ChatPage> {
               content: message,
               conversationId: conversation!.id!,
               role: 0,
-              model: model);
+              model: model!);
           await Message.insertMessage(userMsg);
 
           Message assistantMsg = Message(

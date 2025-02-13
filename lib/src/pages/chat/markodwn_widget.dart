@@ -6,7 +6,8 @@ import 'package:easy_image_viewer/easy_image_viewer.dart';
 
 class MarkdownWidget extends StatefulWidget {
   final String? text;
-  const MarkdownWidget({super.key, this.text});
+  ScrollController? controller;
+  MarkdownWidget({super.key, this.text,this.controller});
   @override
   State<MarkdownWidget> createState() => _MarkdownPageState();
 }
@@ -23,6 +24,7 @@ class _MarkdownPageState extends State<MarkdownWidget>
         focusNode: FocusNode(),
         selectionControls: materialTextControls,
         child: Markdown(
+          controller: widget.controller,
           padding: EdgeInsets.all(5),
           data: widget.text ?? '',
           selectable: false,

@@ -3,7 +3,9 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
+import 'package:chat/src/pages/chat/expandable_panel.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:envied/envied.dart';
 import 'package:flutter/material.dart';
 
@@ -14,6 +16,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int count = 0;
+  bool expand = false;
+  String? selectedValue;
   final MaterialTextSelectionControls materialTextControls =
       MaterialTextSelectionControls();
   bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
@@ -21,19 +25,223 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: ExpandableContainer(
+        child: Column(
           children: [
-            ToggleButton(
-              onSelected: (v) {},
-              icon: Icon(Icons.menu),
-              label: Text("搜索"),
+            ExpandableContainer(
+              children: [
+                ToggleButton(
+                  onSelected: (v) {},
+                  icon: Icon(Icons.menu),
+                  label: Text("搜索"),
+                ),
+                IconButton.filled(onPressed: () {}, icon: Icon(Icons.home)),
+                IconButton.filled(onPressed: () {}, icon: Icon(Icons.add)),
+                IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu)),
+                IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu))
+              ],
             ),
-            IconButton.filled(onPressed: () {}, icon: Icon(Icons.home)),
-            IconButton.filled(onPressed: () {}, icon: Icon(Icons.add)),
-            IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu)),
-            IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu))
+            IconButton.filled(
+                onPressed: () {
+                  setState(() {
+                    expand = !expand;
+                  });
+                },
+                icon: Icon(Icons.arrow_drop_down)),
+            ExpandablePanel(
+              child: Text("hello world"),
+              expand: expand,
+            ),
+            _buildSelectMenu(context),
+            IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.menu),
+              padding: EdgeInsets.zero,
+              // iconSize: 12,
+              constraints: BoxConstraints.tight(Size(24, 24)),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.only(left: 8, right: 8),
+                minimumSize: Size(65, 30), // 设置按钮的宽度和高度
+              ),
+              icon: Icon(Icons.send),
+              label: Text('发送'),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text("千问"),
+            ),
+            _buildTabBar(context),
+            Container(
+              height: 35,
+              color: Colors.white,
+              child: Row(
+                children: [
+                  Expanded(
+                      child: Stack(
+                    children: [
+                      Container(
+                        color: Colors.white,
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.only(
+                                bottomRight: Radius.circular(10))),
+                      )
+                    ],
+                  )),
+                  Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Container(
+                        width: 100,
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(10),
+                                topLeft: Radius.circular(10))),
+                      )
+                    ],
+                  ),
+                  Expanded(
+                      child: Stack(
+                    children: [
+                      Container(
+                        color: Colors.white,
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(10))),
+                      )
+                    ],
+                  )),
+                ],
+              ),
+            )
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSelectMenu(BuildContext context) {
+    final List<String> items = [
+      'Item1',
+      'Item2',
+      'Item3',
+      'Item4',
+      'Item5',
+      'Item6',
+      'Item7',
+      'Item8',
+    ];
+    return DropdownButtonHideUnderline(
+      child: DropdownButton2<String>(
+        isExpanded: true,
+        items: items
+            .map((String item) => DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(
+                    item,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ))
+            .toList(),
+        value: selectedValue,
+        onChanged: (value) {
+          setState(() {
+            selectedValue = value;
+          });
+        },
+        buttonStyleData: ButtonStyleData(
+          height: 26,
+          width: 100,
+          padding: const EdgeInsets.only(left: 5, right: 5),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(13),
+            color: Colors.white.withAlpha(216),
+          ),
+          // elevation: 2,
+        ),
+        iconStyleData: const IconStyleData(
+            icon: Icon(
+              Icons.expand_more,
+            ),
+            iconSize: 14,
+            openMenuIcon: Icon(Icons.expand_less)),
+        dropdownStyleData: DropdownStyleData(
+          maxHeight: 200,
+          width: 100,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: const Color.fromARGB(0, 255, 255, 255),
+          ),
+          offset: const Offset(0, 0),
+          scrollbarTheme: ScrollbarThemeData(
+            radius: const Radius.circular(40),
+            thickness: WidgetStateProperty.all(6),
+            thumbVisibility: WidgetStateProperty.all(true),
+          ),
+        ),
+        menuItemStyleData: const MenuItemStyleData(
+          height: 40,
+          padding: EdgeInsets.only(left: 14, right: 14),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabBar(BuildContext context) {
+    return DefaultTabController(
+      length: 3,
+      child: TabBar(
+        labelColor: Colors.redAccent,
+        unselectedLabelColor: Colors.white,
+        indicatorSize: TabBarIndicatorSize.label,
+        indicator: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(10),
+            topRight: Radius.circular(10),
+          ),
+        ),
+        tabs: [
+          Tab(
+            child: Align(
+              alignment: Alignment.center,
+              child: Text("APPS"),
+            ),
+          ),
+          Tab(
+            child: Align(
+              alignment: Alignment.center,
+              child: Text("MOVIES"),
+            ),
+          ),
+          Tab(
+            child: Align(
+              alignment: Alignment.center,
+              child: Text("GASMES"),
+            ),
+          ),
+        ],
       ),
     );
   }
