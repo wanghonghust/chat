@@ -5,6 +5,8 @@ import 'dart:ui';
 import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:chat/src/pages/chat/expandable_panel.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
+import 'package:chat/widgets/custom_tab/chrome_tab.dart';
+import 'package:chat/widgets/custom_tab/index.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:envied/envied.dart';
 import 'package:flutter/material.dart';
@@ -25,114 +27,117 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-          children: [
-            ExpandableContainer(
-              children: [
-                ToggleButton(
-                  onSelected: (v) {},
-                  icon: Icon(Icons.menu),
-                  label: Text("搜索"),
-                ),
-                IconButton.filled(onPressed: () {}, icon: Icon(Icons.home)),
-                IconButton.filled(onPressed: () {}, icon: Icon(Icons.add)),
-                IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu)),
-                IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu))
-              ],
-            ),
-            IconButton.filled(
-                onPressed: () {
-                  setState(() {
-                    expand = !expand;
-                  });
-                },
-                icon: Icon(Icons.arrow_drop_down)),
-            ExpandablePanel(
-              child: Text("hello world"),
-              expand: expand,
-            ),
-            _buildSelectMenu(context),
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.menu),
-              padding: EdgeInsets.zero,
-              // iconSize: 12,
-              constraints: BoxConstraints.tight(Size(24, 24)),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.only(left: 8, right: 8),
-                minimumSize: Size(65, 30), // 设置按钮的宽度和高度
+        child: Column(children: [
+          ExpandableContainer(
+            children: [
+              ToggleButton(
+                onSelected: (v) {},
+                icon: Icon(Icons.menu),
+                label: Text("搜索"),
               ),
-              icon: Icon(Icons.send),
-              label: Text('发送'),
+              IconButton.filled(onPressed: () {}, icon: Icon(Icons.home)),
+              IconButton.filled(onPressed: () {}, icon: Icon(Icons.add)),
+              IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu)),
+              IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu))
+            ],
+          ),
+          IconButton.filled(
+              onPressed: () {
+                setState(() {
+                  expand = !expand;
+                });
+              },
+              icon: Icon(Icons.arrow_drop_down)),
+          ExpandablePanel(
+            child: Text("hello world"),
+            expand: expand,
+          ),
+          _buildSelectMenu(context),
+          IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.menu),
+            padding: EdgeInsets.zero,
+            // iconSize: 12,
+            constraints: BoxConstraints.tight(Size(24, 24)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.only(left: 8, right: 8),
+              minimumSize: Size(65, 30), // 设置按钮的宽度和高度
             ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.grey,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text("千问"),
+            icon: Icon(Icons.send),
+            label: Text('发送'),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.grey,
+              borderRadius: BorderRadius.circular(5),
             ),
-            _buildTabBar(context),
-            Container(
-              height: 35,
-              color: Colors.white,
-              child: Row(
-                children: [
-                  Expanded(
-                      child: Stack(
-                    children: [
-                      Container(
-                        color: Colors.white,
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.only(
-                                bottomRight: Radius.circular(10))),
-                      )
-                    ],
-                  )),
-                  Stack(
-                    children: [
-                      Container(
-                        width: 100,
-                        decoration: BoxDecoration(
-                          color: Colors.grey,
-                        ),
-                      ),
-                      Container(
-                        width: 100,
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.only(
-                                topRight: Radius.circular(10),
-                                topLeft: Radius.circular(10))),
-                      )
-                    ],
-                  ),
-                  Expanded(
-                      child: Stack(
-                    children: [
-                      Container(
-                        color: Colors.white,
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(10))),
-                      )
-                    ],
-                  )),
-                ],
-              ),
-            )
-          ],
-        ),
+            child: Text("千问"),
+          ),
+          // _buildTabBar(context),
+          // Container(
+          //   height: 35,
+          //   color: Colors.white,
+          //   child: Row(
+          //     children: [
+          //       Expanded(
+          //           child: Stack(
+          //         children: [
+          //           Container(
+          //             color: Colors.white,
+          //           ),
+          //           Container(
+          //             decoration: BoxDecoration(
+          //                 color: Colors.grey,
+          //                 borderRadius: BorderRadius.only(
+          //                     bottomRight: Radius.circular(10))),
+          //           )
+          //         ],
+          //       )),
+          //       Stack(
+          //         children: [
+          //           Container(
+          //             width: 100,
+          //             decoration: BoxDecoration(
+          //               color: Colors.grey,
+          //             ),
+          //           ),
+          //           Container(
+          //             width: 100,
+          //             decoration: BoxDecoration(
+          //                 color: Colors.white,
+          //                 borderRadius: BorderRadius.only(
+          //                     topRight: Radius.circular(10),
+          //                     topLeft: Radius.circular(10))),
+          //           )
+          //         ],
+          //       ),
+          //       Expanded(
+          //           child: Stack(
+          //         children: [
+          //           Container(
+          //             color: Colors.white,
+          //           ),
+          //           Container(
+          //             decoration: BoxDecoration(
+          //                 color: Colors.grey,
+          //                 borderRadius: BorderRadius.only(
+          //                     bottomLeft: Radius.circular(10))),
+          //           )
+          //         ],
+          //       )),
+          //     ],
+          //   ),
+          // ),
+          Container(
+            color: Colors.grey,
+            child: CustomTab(),
+          ),
+          
+        ]),
       ),
     );
   }
