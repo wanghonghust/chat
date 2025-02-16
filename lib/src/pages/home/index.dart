@@ -6,7 +6,7 @@ import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:chat/src/pages/chat/expandable_panel.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:chat/widgets/custom_tab/chrome_tab.dart';
-import 'package:chat/widgets/custom_tab/index.dart';
+import 'package:chat/widgets/custom_tab/index.dart' as csTab;
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:envied/envied.dart';
 import 'package:flutter/material.dart';
@@ -77,66 +77,21 @@ class _HomePageState extends State<HomePage> {
             ),
             child: Text("千问"),
           ),
-          // _buildTabBar(context),
-          // Container(
-          //   height: 35,
-          //   color: Colors.white,
-          //   child: Row(
-          //     children: [
-          //       Expanded(
-          //           child: Stack(
-          //         children: [
-          //           Container(
-          //             color: Colors.white,
-          //           ),
-          //           Container(
-          //             decoration: BoxDecoration(
-          //                 color: Colors.grey,
-          //                 borderRadius: BorderRadius.only(
-          //                     bottomRight: Radius.circular(10))),
-          //           )
-          //         ],
-          //       )),
-          //       Stack(
-          //         children: [
-          //           Container(
-          //             width: 100,
-          //             decoration: BoxDecoration(
-          //               color: Colors.grey,
-          //             ),
-          //           ),
-          //           Container(
-          //             width: 100,
-          //             decoration: BoxDecoration(
-          //                 color: Colors.white,
-          //                 borderRadius: BorderRadius.only(
-          //                     topRight: Radius.circular(10),
-          //                     topLeft: Radius.circular(10))),
-          //           )
-          //         ],
-          //       ),
-          //       Expanded(
-          //           child: Stack(
-          //         children: [
-          //           Container(
-          //             color: Colors.white,
-          //           ),
-          //           Container(
-          //             decoration: BoxDecoration(
-          //                 color: Colors.grey,
-          //                 borderRadius: BorderRadius.only(
-          //                     bottomLeft: Radius.circular(10))),
-          //           )
-          //         ],
-          //       )),
-          //     ],
-          //   ),
-          // ),
           Container(
             color: Colors.grey,
-            child: CustomTab(),
+            child: csTab.CustomTab(
+              items: [
+                csTab.TabItem(label: "Home", icon: Icons.home),
+                csTab.TabItem(label: "Add", icon: Icons.add),
+                csTab.TabItem(label: "Home", icon: Icons.home),
+                csTab.TabItem(label: "Home", icon: Icons.home),
+              ],
+            ),
           ),
-          
+          Transform.scale(
+            scale: 0.5, // 设置缩放比例，例如1.5倍大小
+            child: CloseButton(),
+          )
         ]),
       ),
     );
