@@ -77,21 +77,15 @@ class _HomePageState extends State<HomePage> {
             ),
             child: Text("千问"),
           ),
-          Container(
-            color: Colors.grey,
-            child: csTab.CustomTab(
-              items: [
-                csTab.TabItem(label: "Home", icon: Icons.home),
-                csTab.TabItem(label: "Add", icon: Icons.add),
-                csTab.TabItem(label: "Home", icon: Icons.home),
-                csTab.TabItem(label: "Home", icon: Icons.home),
-              ],
-            ),
-          ),
-          Transform.scale(
-            scale: 0.5, // 设置缩放比例，例如1.5倍大小
-            child: CloseButton(),
-          )
+          Expanded(
+              child: csTab.CustomTab(
+            items: [
+              csTab.TabItem(label: "Home", icon: Icons.home),
+              csTab.TabItem(label: "Add", icon: Icons.add),
+              csTab.TabItem(label: "Home", icon: Icons.home),
+              csTab.TabItem(label: "Home", icon: Icons.home),
+            ],
+          ))
         ]),
       ),
     );

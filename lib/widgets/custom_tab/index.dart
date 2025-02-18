@@ -8,11 +8,17 @@ class CustomTab extends StatefulWidget {
   final List<TabItem> items;
   final EdgeInsetsGeometry padding;
   final double radius;
+  final Color? backgroundColor;
+  final Color? hoverColor;
+  final Color? activeColor;
   const CustomTab({
     super.key,
     required this.items,
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-    this.radius = 6,
+    this.padding = const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+    this.radius = 8,
+    this.backgroundColor,
+    this.hoverColor,
+    this.activeColor,
   });
 
   @override
@@ -88,8 +94,21 @@ class _CustomTabState extends State<CustomTab> {
           _controller.currentIndex == -1) {
         shape = CsShape.mShape;
       }
+      if(_controller.currentIndex >=0 && _controller.hoverIndex >=0){
+        if(_controller.hoverIndex == _controller.currentIndex - 1 && i == _controller.currentIndex){
+          shape = CsShape.mShape;
+        }
+      }
+
       children.add(ShapeButton(
-        activeColor: Theme.of(context).primaryColor,
+        activeColor: widget.activeColor ??
+            (Theme.of(context).brightness == Brightness.dark
+                ? const Color.fromARGB(255, 59, 59, 59)
+                : const Color.fromARGB(255, 247, 247, 247)),
+        hoverColor: widget.hoverColor ??
+            (Theme.of(context).brightness == Brightness.dark
+                ? const Color.fromARGB(255, 42, 42, 42)
+                : const Color.fromARGB(255, 218, 218, 218)),
         onHover: (value) {
           if (value) {
             _controller.setHoverIndex(i);
@@ -102,13 +121,19 @@ class _CustomTabState extends State<CustomTab> {
         },
         active: _controller.currentIndex == i,
         shape: shape,
-        color: Colors.transparent,
+        color: widget.backgroundColor ??
+            (Theme.of(context).brightness == Brightness.dark
+                ? const Color.fromARGB(255, 32, 32, 32)
+                : const Color.fromARGB(255, 205, 205, 205)),
         padding: widget.padding,
         radius: widget.radius,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(widget.items[i].icon),
+            Icon(
+              widget.items[i].icon,
+              size: 16,
+            ),
             SizedBox(
               width: 5,
             ),
@@ -118,7 +143,10 @@ class _CustomTabState extends State<CustomTab> {
             ),
             TabIconButton(
               onPressed: () {},
-              icon: Icon(Icons.close,size: 16,),
+              icon: Icon(
+                Icons.close,
+                size: 16,
+              ),
             )
           ],
         ),
@@ -129,21 +157,52 @@ class _CustomTabState extends State<CustomTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      _TabRenderWidget(
-        backgroundColor: const Color.fromARGB(93, 216, 216, 216),
-        radius: widget.radius,
-        padding: widget.padding,
-        borderColor: const Color.fromRGBO(255, 255, 255, 1),
-        borderWidth: 1,
-        controller: _controller,
-        children: getChildren(),
-      ),
-      TabIconButton(
-        onPressed: () {},
-        icon: Icon(Icons.add,size: 20,),
-      )
-    ]);
+    return Container(
+        alignment: Alignment.topCenter,
+        color: widget.activeColor ??
+            (Theme.of(context).brightness == Brightness.dark
+                ? const Color.fromARGB(255, 59, 59, 59)
+                : const Color.fromARGB(255, 247, 247, 247)),
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                    bottom: BorderSide(
+                  width: 0,
+                  color: widget.activeColor ??
+                      (Theme.of(context).brightness == Brightness.dark
+                          ? const Color.fromARGB(255, 59, 59, 59)
+                          : const Color.fromARGB(255, 247, 247, 247)),
+                ) // 边框宽度设为0
+                    ),
+                color: widget.backgroundColor ??
+                    (Theme.of(context).brightness == Brightness.dark
+                        ? const Color.fromARGB(255, 32, 32, 32)
+                        : const Color.fromARGB(255, 205, 205, 205)),
+              ),
+              padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 0),
+              child: Row(children: [
+                _TabRenderWidget(
+                  backgroundColor: Colors.transparent,
+                  radius: widget.radius,
+                  padding: widget.padding,
+                  borderWidth: 1,
+                  controller: _controller,
+                  children: getChildren(),
+                ),
+                TabIconButton(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.add,
+                    size: 20,
+                  ),
+                )
+              ]),
+            ),
+            Expanded(child: Container())
+          ],
+        ));
   }
 }
 
@@ -170,7 +229,7 @@ class _TabIconButtonState extends State<TabIconButton> {
       onTap: widget.onPressed,
       child: Container(
         decoration: BoxDecoration(
-          color: _hover ? const Color.fromARGB(255, 212, 212, 212).withAlpha(200) : Colors.transparent,
+          color: _hover ? Theme.of(context).hoverColor : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
         ),
         child: widget.icon,
@@ -242,16 +301,14 @@ class _TabRenderWidget extends MultiChildRenderObjectWidget {
   final double radius;
   final EdgeInsetsGeometry padding;
 
-  final Color borderColor;
   final Color backgroundColor;
   final double borderWidth;
   final CsTabController controller;
-  _TabRenderWidget({
+  const _TabRenderWidget({
     required super.children,
     required this.radius,
     required this.padding,
     required this.controller,
-    required this.borderColor,
     required this.borderWidth,
     required this.backgroundColor,
   });
@@ -261,7 +318,6 @@ class _TabRenderWidget extends MultiChildRenderObjectWidget {
     return TabRenderBox(
       radius: radius,
       padding: padding,
-      borderColor: borderColor,
       borderWidth: borderWidth,
       controller: controller,
       backgroundColor: backgroundColor,
@@ -273,8 +329,9 @@ class _TabRenderWidget extends MultiChildRenderObjectWidget {
       BuildContext context, covariant TabRenderBox renderObject) {
     renderObject
       ..radius = radius
-      ..padding = padding!
-      ..controller = controller;
+      ..padding = padding
+      ..controller = controller
+      ..backgroundColor = backgroundColor;
   }
 
   @override
@@ -303,8 +360,7 @@ class TabRenderBox extends RenderBox
         RenderBoxContainerDefaultsMixin<RenderBox, TabLayoutParentData> {
   double radius;
   EdgeInsetsGeometry padding;
-  final Color borderColor;
-  final Color backgroundColor;
+  Color backgroundColor;
   final double borderWidth;
   CsTabController controller;
 
@@ -312,7 +368,6 @@ class TabRenderBox extends RenderBox
     required this.radius,
     required this.controller,
     required this.padding,
-    required this.borderColor,
     required this.borderWidth,
     required this.backgroundColor,
   });
@@ -352,7 +407,7 @@ class TabRenderBox extends RenderBox
       ..style = PaintingStyle.fill;
     context.canvas.drawRect(offset & size, bgPaint);
     final Paint linePaint = Paint()
-      ..color = const Color.fromARGB(255, 255, 255, 255)
+      ..color = const Color.fromARGB(255, 131, 131, 131)
       ..style = PaintingStyle.stroke;
     RenderBox child = children.first;
     if (controller.currentIndex != 0 && controller.hoverIndex != 0) {
@@ -393,6 +448,7 @@ class ShapeButton extends StatefulWidget {
   final Widget child;
   final Color color;
   final Color activeColor;
+  final Color hoverColor;
   final CsShape shape;
   final Function()? onTap;
   final Function(bool)? onHover;
@@ -408,6 +464,7 @@ class ShapeButton extends StatefulWidget {
     required this.padding,
     required this.radius,
     required this.activeColor,
+    required this.hoverColor,
     this.onTap,
     this.onHover,
     this.color = Colors.transparent,
@@ -424,7 +481,7 @@ class _ShapeButtonState extends State<ShapeButton> {
   Widget build(BuildContext context) {
     Color _color = widget.active ? widget.activeColor : widget.color;
     if (_hovered && !widget.active) {
-      _color = const Color.fromARGB(89, 121, 121, 121);
+      _color = widget.hoverColor;
     }
     EdgeInsets actualPadding = widget.padding.resolve(TextDirection.ltr);
 
