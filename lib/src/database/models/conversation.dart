@@ -48,8 +48,15 @@ class Conversation {
   }
 
   static Future<void> deleteConversation(int id) async {
-    print(id);
     final db = await database;
-    db.rawDelete('DELETE FROM messages WHERE conversationId = ?', [id]);
+    await db.delete('messages',
+        where: 'conversationId = ?', whereArgs: [id]).then((res) async {
+      print('Deleted $res messages');
+      await db.delete('conversations', where: 'id = ?', whereArgs: [id]).then(
+          (res1) {
+        print('Deleted $res1 conversation');
+      });
+    });
   }
+  
 }

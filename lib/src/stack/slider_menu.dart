@@ -1,7 +1,9 @@
+import 'package:chat/src/data_provider/index.dart';
 import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/pages/chat/index.dart';
 import 'package:chat/widgets/sidebar/index.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class SliderMenu extends StatefulWidget {
   final Function(SidebarItem)? onItemClick;
@@ -9,6 +11,7 @@ class SliderMenu extends StatefulWidget {
   final List<SidebarItem> items;
   final List<Conversation>? histories;
   final Key? activeKey;
+  final Function(Conversation)? onHistoryDelete;
   const SliderMenu({
     super.key,
     this.activeKey,
@@ -16,6 +19,7 @@ class SliderMenu extends StatefulWidget {
     this.histories,
     this.onItemClick,
     this.navigatorKey,
+    this.onHistoryDelete,
   });
 
   @override
@@ -35,7 +39,8 @@ class _SliderMenuState extends State<SliderMenu> {
           SizedBox(
             height: 10,
           ),
-          if (widget.histories != null) Expanded(child: _buildHistory(context)),
+          if (widget.histories!.isNotEmpty)
+            Expanded(child: _buildHistory(context)),
           Divider(
             thickness: 1,
             height: 1,
@@ -264,7 +269,11 @@ class _SliderMenuState extends State<SliderMenu> {
           ),
           onTap: () {
             if (conversation.id != null) {
-              Conversation.deleteConversation(conversation.id!);
+              Conversation.deleteConversation(conversation.id!).then((v) {
+                if(widget.onHistoryDelete!=null){
+                  widget.onHistoryDelete!(conversation);
+                }
+              });
             }
           },
         ),

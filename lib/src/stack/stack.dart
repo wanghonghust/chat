@@ -93,6 +93,19 @@ class _AppStackState extends State<AppStack> with RouteAware {
     _updateCanPop();
   }
 
+  void _onHistoryDelete(Conversation conversation) async {
+    var res = await Conversation.getConversations();
+    dataProvider!.setConversations(res);
+    final snackBar = SnackBar(
+      content: Text('删除对话 ${conversation.title} 成功'),
+      action: SnackBarAction(
+        label: '撤销',
+        onPressed: () {},
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
@@ -112,6 +125,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
       histories: dataProvider!.conversations,
       activeKey: ValueKey(dataProvider!.currentRoute),
       navigatorKey: _localNavigatorKey,
+      onHistoryDelete: _onHistoryDelete,
     );
     bool showDrawer = isDesktop && isSmallScreen || !isDesktop;
 
