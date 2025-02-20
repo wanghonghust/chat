@@ -171,28 +171,136 @@ class _SliderMenuState extends State<SliderMenu> {
 
   Widget _buildHistory(BuildContext context) {
     return ListView.builder(
+      padding: EdgeInsets.all(10),
       itemBuilder: (context, index) {
         String route =
             "/chat:${widget.histories![index].id}:${widget.histories![index].title}";
         return InkWell(
-          // borderRadius: BorderRadius.all(Radius.circular(5)),
+          borderRadius: BorderRadius.all(Radius.circular(5)),
           onTap: () {
             widget.navigatorKey!.currentState?.pushNamed(route);
           },
           child: Container(
-            color: widget.activeKey == ValueKey(route)
-                ? Theme.of(context).primaryColor
-                : null,
-            padding: EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
-            child: Text(
-              widget.histories![index].title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            margin: EdgeInsets.only(bottom: 2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(5)),
+              color: widget.activeKey == ValueKey(route)
+                  ? Theme.of(context).primaryColor
+                  : null,
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+            child: Row(
+              children: [
+                Expanded(
+                    child: Text(
+                  widget.histories![index].title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (details) {
+                    _showMenu(context, details.globalPosition,
+                        widget.histories![index]);
+                  },
+                  child: Icon(
+                    Icons.more_horiz,
+                    size: 16,
+                  ),
+                )
+              ],
             ),
           ),
         );
       },
       itemCount: widget.histories!.length,
+    );
+  }
+
+  void _showMenu(
+      BuildContext context, Offset position, Conversation conversation) {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    showMenu(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color.fromARGB(255, 32, 32, 32)
+          : const Color.fromARGB(255, 247, 247, 247),
+      menuPadding: EdgeInsets.all(5),
+      context: context,
+      constraints: BoxConstraints(maxWidth: 110),
+      position: RelativeRect.fromRect(
+        Rect.fromPoints(position, position), // 鼠标点击的位置
+        Offset.zero & overlay.size, // 确保菜单正确显示
+      ),
+      items: [
+        PopupMenuItem(
+          padding: EdgeInsets.zero,
+          height: 32,
+          value: "share",
+          child: Row(
+            children: [
+              Icon(
+                Icons.share,
+                size: 24,
+              ),
+              SizedBox(width: 10),
+              Expanded(child: Text("分享"))
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          padding: EdgeInsets.zero,
+          height: 32,
+          value: "delete",
+          child: Row(
+            children: [
+              Icon(
+                Icons.delete,
+                size: 24,
+              ),
+              SizedBox(width: 10),
+              Expanded(child: Text("删除对话"))
+            ],
+          ),
+          onTap: () {
+            if (conversation.id != null) {
+              Conversation.deleteConversation(conversation.id!);
+            }
+          },
+        ),
+        PopupMenuItem(
+          padding: EdgeInsets.zero,
+          height: 32,
+          value: "edit",
+          child: Row(
+            children: [
+              Icon(
+                Icons.edit_note,
+                size: 24,
+              ),
+              SizedBox(width: 10),
+              Expanded(child: Text("重命名"))
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          padding: EdgeInsets.zero,
+          height: 32,
+          value: "tune",
+          child: SizedBox(
+            child: Row(
+              children: [
+                Icon(
+                  Icons.tune,
+                  size: 24,
+                ),
+                SizedBox(width: 10),
+                Expanded(child: Text("批量管理"))
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

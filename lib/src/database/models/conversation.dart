@@ -46,4 +46,10 @@ class Conversation {
         Conversation(id: id, title: title),
     ];
   }
+
+  static Future<void> deleteConversation(int id) async {
+    print(id);
+    final db = await database;
+    db.rawDelete('DELETE FROM messages WHERE conversationId = ?', [id]);
+  }
 }

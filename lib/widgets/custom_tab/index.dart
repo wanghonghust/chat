@@ -1,11 +1,12 @@
 import 'dart:math';
 
+import 'package:chat/widgets/custom_tab/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CustomTab extends StatefulWidget {
-  final List<TabItem> items;
+  final CustomTabController controller;
   final EdgeInsetsGeometry padding;
   final double radius;
   final Color? backgroundColor;
@@ -13,7 +14,7 @@ class CustomTab extends StatefulWidget {
   final Color? activeColor;
   const CustomTab({
     super.key,
-    required this.items,
+    required this.controller,
     this.padding = const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
     this.radius = 8,
     this.backgroundColor,
@@ -34,11 +35,13 @@ class _CustomTabState extends State<CustomTab> {
   void initState() {
     super.initState();
     _controller.addListener(_updateUi);
+    widget.controller.addListener(_updateUi);
   }
 
   @override
   void dispose() {
     _controller.removeListener(_updateUi);
+    widget.controller.removeListener(_updateUi);
     super.dispose();
   }
 
@@ -61,7 +64,7 @@ class _CustomTabState extends State<CustomTab> {
 
   List<Widget> getChildren() {
     List<Widget> children = [];
-    for (int i = 0; i < widget.items.length; i++) {
+    for (int i = 0; i < widget.controller.items.length; i++) {
       CsShape shape = CsShape.none;
       if (_controller.currentIndex >= 0) {
         if (i == _controller.currentIndex) {
@@ -94,9 +97,11 @@ class _CustomTabState extends State<CustomTab> {
           _controller.currentIndex == -1) {
         shape = CsShape.mShape;
       }
-      if(_controller.currentIndex >=0 && _controller.hoverIndex >=0){
-        if(_controller.hoverIndex == _controller.currentIndex - 1 && i == _controller.currentIndex){
-          shape = CsShape.mShape;
+      if (_controller.currentIndex >= 0 && _controller.hoverIndex >= 0) {
+        if (i == _controller.currentIndex + 1 &&
+            (i == _controller.hoverIndex - 1 ||
+                i == _controller.hoverIndex + 2)) {
+          shape = CsShape.rShape;
         }
       }
 
@@ -131,18 +136,20 @@ class _CustomTabState extends State<CustomTab> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              widget.items[i].icon,
+              widget.controller.items[i].icon,
               size: 16,
             ),
             SizedBox(
               width: 5,
             ),
-            Text(widget.items[i].label),
+            Text(widget.controller.items[i].label),
             SizedBox(
               width: 5,
             ),
             TabIconButton(
-              onPressed: () {},
+              onPressed: () {
+                widget.controller.removeTab(i);
+              },
               icon: Icon(
                 Icons.close,
                 size: 16,
@@ -157,52 +164,56 @@ class _CustomTabState extends State<CustomTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        alignment: Alignment.topCenter,
-        color: widget.activeColor ??
-            (Theme.of(context).brightness == Brightness.dark
-                ? const Color.fromARGB(255, 59, 59, 59)
-                : const Color.fromARGB(255, 247, 247, 247)),
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                    bottom: BorderSide(
-                  width: 0,
-                  color: widget.activeColor ??
+    return DragTarget<TabItem>(builder: (context, accepted, rejected) {
+      return Container(
+          alignment: Alignment.topCenter,
+          color: widget.activeColor ??
+              (Theme.of(context).brightness == Brightness.dark
+                  ? const Color.fromARGB(255, 59, 59, 59)
+                  : const Color.fromARGB(255, 247, 247, 247)),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                      bottom: BorderSide(
+                    width: 0,
+                    color: widget.activeColor ??
+                        (Theme.of(context).brightness == Brightness.dark
+                            ? const Color.fromARGB(255, 59, 59, 59)
+                            : const Color.fromARGB(255, 247, 247, 247)),
+                  ) // 边框宽度设为0
+                      ),
+                  color: widget.backgroundColor ??
                       (Theme.of(context).brightness == Brightness.dark
-                          ? const Color.fromARGB(255, 59, 59, 59)
-                          : const Color.fromARGB(255, 247, 247, 247)),
-                ) // 边框宽度设为0
-                    ),
-                color: widget.backgroundColor ??
-                    (Theme.of(context).brightness == Brightness.dark
-                        ? const Color.fromARGB(255, 32, 32, 32)
-                        : const Color.fromARGB(255, 205, 205, 205)),
-              ),
-              padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 0),
-              child: Row(children: [
-                _TabRenderWidget(
-                  backgroundColor: Colors.transparent,
-                  radius: widget.radius,
-                  padding: widget.padding,
-                  borderWidth: 1,
-                  controller: _controller,
-                  children: getChildren(),
+                          ? const Color.fromARGB(255, 32, 32, 32)
+                          : const Color.fromARGB(255, 205, 205, 205)),
                 ),
-                TabIconButton(
-                  onPressed: () {},
-                  icon: Icon(
-                    Icons.add,
-                    size: 20,
+                padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 0),
+                child: Row(children: [
+                  _TabRenderWidget(
+                    backgroundColor: Colors.transparent,
+                    radius: widget.radius,
+                    padding: widget.padding,
+                    borderWidth: 1,
+                    controller: _controller,
+                    children: getChildren(),
                   ),
-                )
-              ]),
-            ),
-            Expanded(child: Container())
-          ],
-        ));
+                  TabIconButton(
+                    onPressed: () {
+                      widget.controller.addTab(TabItem(icon: Icons.accessible,label: "New Tab"));
+                    },
+                    icon: Icon(
+                      Icons.add,
+                      size: 20,
+                    ),
+                  )
+                ]),
+              ),
+              Expanded(child: Container())
+            ],
+          ));
+    });
   }
 }
 
@@ -455,6 +466,12 @@ class ShapeButton extends StatefulWidget {
   final bool active;
   final EdgeInsetsGeometry padding;
   final double radius;
+  // 拖动开始事件
+  final Function? onDragStarted;
+  // 拖动完成事件
+  final Function? onDragCompleted;
+  // 拖动取消事件
+  final Function? onDraggableCanceled;
 
   const ShapeButton({
     super.key,
@@ -468,6 +485,9 @@ class ShapeButton extends StatefulWidget {
     this.onTap,
     this.onHover,
     this.color = Colors.transparent,
+    this.onDragStarted,
+    this.onDragCompleted,
+    this.onDraggableCanceled,
   });
 
   @override
@@ -485,38 +505,59 @@ class _ShapeButtonState extends State<ShapeButton> {
     }
     EdgeInsets actualPadding = widget.padding.resolve(TextDirection.ltr);
 
-    return ClipPath(
-      clipper: ShapClipper(
-        shape: widget.shape,
-        radius: widget.radius,
-        padding: widget.padding,
-      ),
-      child: InkWell(
-        onTap: () {
-          if (widget.onTap != null) {
-            widget.onTap!();
+    return Draggable(
+        onDragCompleted: () {
+          if (widget.onDragCompleted != null) {
+            widget.onDragCompleted!();
           }
         },
-        onHover: (value) {
-          if (widget.onHover != null) {
-            widget.onHover!(value);
+        onDragStarted: () {
+          if (widget.onDragStarted != null) {
+            widget.onDragStarted!();
           }
-          setState(() {
-            _hovered = value;
-          });
         },
-        child: Container(
-          padding: EdgeInsets.only(
-            left: actualPadding.left + widget.radius,
-            right: actualPadding.right + widget.radius,
-            top: actualPadding.top,
-            bottom: actualPadding.bottom,
+        onDraggableCanceled: (velocity, offset) {
+          if (widget.onDraggableCanceled != null) {
+            widget.onDraggableCanceled!();
+          }
+        },
+        feedback: Material(
+          child: Container(
+            child: Text("test"),
           ),
-          color: _color,
-          child: widget.child,
         ),
-      ),
-    );
+        child: ClipPath(
+          clipper: ShapClipper(
+            shape: widget.shape,
+            radius: widget.radius,
+            padding: widget.padding,
+          ),
+          child: InkWell(
+            onTap: () {
+              if (widget.onTap != null) {
+                widget.onTap!();
+              }
+            },
+            onHover: (value) {
+              if (widget.onHover != null) {
+                widget.onHover!(value);
+              }
+              setState(() {
+                _hovered = value;
+              });
+            },
+            child: Container(
+              padding: EdgeInsets.only(
+                left: actualPadding.left + widget.radius,
+                right: actualPadding.right + widget.radius,
+                top: actualPadding.top,
+                bottom: actualPadding.bottom,
+              ),
+              color: _color,
+              child: widget.child,
+            ),
+          ),
+        ));
   }
 }
 
@@ -539,7 +580,7 @@ class ShapClipper extends CustomClipper<Path> {
     bool isRSide = shape == CsShape.rShape;
     bool isLSide = shape == CsShape.lShape;
     bool isNone = shape == CsShape.none;
-    if (isNone) {
+    if (isNone || radius == 0) {
       path.addRect(
           Rect.fromLTWH(startX + radius, startY, width - 2 * radius, height));
       return path;

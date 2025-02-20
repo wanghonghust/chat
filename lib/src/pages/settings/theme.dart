@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 
 bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 var lightTheme = FlexThemeData.light(
-    scheme: FlexScheme.indigoM3,
-    scaffoldBackground: isDesktop? Colors.transparent:null,
+    scheme: FlexScheme.orangeM3,
+    scaffoldBackground: isDesktop ? Colors.transparent : null,
     subThemesData: const FlexSubThemesData(
+        popupMenuRadius: 10,
         drawerBackgroundSchemeColor: SchemeColor.transparent,
         interactionEffects: true,
         tintedDisabledControls: true,
@@ -37,9 +38,10 @@ var lightTheme = FlexThemeData.light(
     visualDensity: FlexColorScheme.comfortablePlatformDensity,
     cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true));
 var darkTheme = FlexThemeData.dark(
-    scaffoldBackground: isDesktop? Colors.transparent:null,
-    scheme: FlexScheme.indigoM3,
+    scaffoldBackground: isDesktop ? Colors.transparent : null,
+    scheme: FlexScheme.orangeM3,
     subThemesData: const FlexSubThemesData(
+        popupMenuRadius: 10,
         drawerBackgroundSchemeColor: SchemeColor.transparent,
         interactionEffects: true,
         tintedDisabledControls: true,

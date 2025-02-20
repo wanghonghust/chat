@@ -6,6 +6,7 @@ import 'package:animated_size_and_fade/animated_size_and_fade.dart';
 import 'package:chat/src/pages/chat/expandable_panel.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:chat/widgets/custom_tab/chrome_tab.dart';
+import 'package:chat/widgets/custom_tab/controller.dart';
 import 'package:chat/widgets/custom_tab/index.dart' as csTab;
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:envied/envied.dart';
@@ -20,6 +21,13 @@ class _HomePageState extends State<HomePage> {
   int count = 0;
   bool expand = false;
   String? selectedValue;
+  CustomTabController controller =
+      CustomTabController(selectedIndex: 0, items: [
+    csTab.TabItem(label: "Home", icon: Icons.home),
+    csTab.TabItem(label: "Add", icon: Icons.add),
+    csTab.TabItem(label: "Home", icon: Icons.home),
+    csTab.TabItem(label: "FaceRecognition", icon: Icons.face),
+  ]);
   final MaterialTextSelectionControls materialTextControls =
       MaterialTextSelectionControls();
   bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
@@ -79,12 +87,7 @@ class _HomePageState extends State<HomePage> {
           ),
           Expanded(
               child: csTab.CustomTab(
-            items: [
-              csTab.TabItem(label: "Home", icon: Icons.home),
-              csTab.TabItem(label: "Add", icon: Icons.add),
-              csTab.TabItem(label: "Home", icon: Icons.home),
-              csTab.TabItem(label: "Home", icon: Icons.home),
-            ],
+            controller: controller,
           ))
         ]),
       ),

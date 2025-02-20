@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chat/env/env.dart';
 import 'package:chat/src/data_provider/index.dart';
 import 'package:chat/src/database/models/conversation.dart';
@@ -42,6 +44,8 @@ class _ChatPageState extends State<ChatPage> {
   bool network = false;
   bool autoScroll = true;
   bool selectModel = false;
+  StreamSubscription? subscription;
+  final FocusNode _focusNode = FocusNode();
   final MaterialTextSelectionControls materialTextControls =
       MaterialTextSelectionControls();
   final sliderValue = ValueNotifier<double>(0.5);
@@ -300,39 +304,46 @@ class _ChatPageState extends State<ChatPage> {
                 child: Column(
                   children: [
                     Expanded(
-                        child: TextField(
-                      onChanged: (value) {
-                        setState(() {
-                          userMessage = value.trim();
-                        });
-                      },
-                      controller: textEditingController,
-                      style: TextStyle(fontSize: 16),
-                      decoration: InputDecoration(
-                          fillColor: Colors.transparent,
-                          focusColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          hintText: "给智能助手发送消息",
-                          border: InputBorder.none),
-                      keyboardType: TextInputType.multiline,
-                      maxLines: null,
-                    )),
+                        child: KeyboardListener(
+                            onKeyEvent: (event) {
+                              if (event is KeyDownEvent &&
+                                  event.logicalKey ==
+                                      LogicalKeyboardKey.enter) {
+                                sendMessage();
+                              }
+                            },
+                            focusNode: _focusNode,
+                            child: TextField(
+                              onChanged: (value) {
+                                setState(() {
+                                  userMessage = value.trim();
+                                });
+                              },
+                              controller: textEditingController,
+                              style: TextStyle(fontSize: 16),
+                              decoration: InputDecoration(
+                                  fillColor: Colors.transparent,
+                                  focusColor: Colors.transparent,
+                                  hoverColor: Colors.transparent,
+                                  hintText: "给智能助手发送消息",
+                                  border: InputBorder.none),
+                              keyboardType: TextInputType.multiline,
+                              maxLines: null,
+                            ))),
                     SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Expanded(child: _buildStarMenu(context)),
                         SizedBox(width: 10),
-                        ElevatedButton.icon(
-                          onPressed: done && userMessage.isNotEmpty
-                              ? sendMessage
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.only(left: 8, right: 8),
-                            minimumSize: Size(65, 30), // 设置按钮的宽度和高度
+                        CusIconButton(
+                          onPressed: sendMessage,
+                          icon: Icon(
+                            subscription == null
+                                ? Icons.send_rounded
+                                : Icons.stop,
+                            size: 16,
                           ),
-                          icon: Icon(Icons.send),
-                          label: Text('发送'),
                         )
                       ],
                     ),
@@ -443,6 +454,14 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void sendMessage() async {
+    if (subscription != null) {
+      subscription!.cancel();
+      setState(() {
+        subscription = null;
+      });
+      return;
+    }
+
     AppDataProvider dataProvider =
         Provider.of<AppDataProvider>(context, listen: false);
     if (conversation == null && userMessage.trim().isNotEmpty) {
@@ -496,7 +515,8 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       orderedMessages.add(resModel);
     });
-    chatStream.listen(
+
+    subscription = chatStream.listen(
       (streamChatCompletion) {
         final content = streamChatCompletion.choices.first.delta.content;
         content?.forEach((item) {
@@ -522,6 +542,7 @@ class _ChatPageState extends State<ChatPage> {
       onDone: () async {
         setState(() {
           done = true;
+          subscription = null;
         });
         if (conversation != null) {
           Message userMsg = Message(
