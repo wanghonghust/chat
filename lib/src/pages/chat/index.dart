@@ -10,6 +10,7 @@ import 'package:chat/src/pages/chat/markodwn_widget.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:chat/src/pages/home/index.dart';
 import 'package:chat/src/pages/settings/controller.dart';
+import 'package:chat/src/pages/test/index.dart';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';

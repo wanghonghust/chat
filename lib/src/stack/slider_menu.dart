@@ -39,8 +39,10 @@ class _SliderMenuState extends State<SliderMenu> {
           SizedBox(
             height: 10,
           ),
-          if (widget.histories!.isNotEmpty)
-            Expanded(child: _buildHistory(context)),
+          Expanded(
+              child: widget.histories!.isNotEmpty
+                  ? _buildHistory(context)
+                  : SizedBox.shrink()),
           Divider(
             thickness: 1,
             height: 1,
@@ -270,7 +272,7 @@ class _SliderMenuState extends State<SliderMenu> {
           onTap: () {
             if (conversation.id != null) {
               Conversation.deleteConversation(conversation.id!).then((v) {
-                if(widget.onHistoryDelete!=null){
+                if (widget.onHistoryDelete != null) {
                   widget.onHistoryDelete!(conversation);
                 }
               });
