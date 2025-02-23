@@ -96,6 +96,10 @@ class _AppStackState extends State<AppStack> with RouteAware {
   void _onHistoryDelete(Conversation conversation) async {
     var res = await Conversation.getConversations();
     dataProvider!.setConversations(res);
+    String route ="/chat:${conversation.id}:${conversation.title}";
+    if(route == dataProvider!.currentRoute){
+      _localNavigatorKey.currentState!.pop();
+    }
     final snackBar = SnackBar(
       content: Text('删除对话 ${conversation.title} 成功'),
       action: SnackBarAction(
