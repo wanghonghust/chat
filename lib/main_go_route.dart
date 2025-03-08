@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:chat/route_new.dart';
 import 'package:chat/src/data_provider/index.dart';
 import 'package:chat/src/database/index.dart';
 import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/settings/theme.dart';
-import 'package:chat/src/stack/stack.dart';
-import 'package:chat/widgets/glass_widget/index.dart';
+import 'package:chat/src/stack/stack_go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
@@ -28,15 +28,13 @@ Future<void> main() async {
   }
 
   List<Conversation> histories = await Conversation.getConversations();
-  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) {
       ThemeNotifier notifier =
           ThemeNotifier(lightTheme, context, ThemeMode.system);
       return notifier;
     }),
-    ChangeNotifierProvider(
-        create: (_) => AppDataProvider(histories, "/", navigatorKey))
+    ChangeNotifierProvider(create: (_) => AppDataProvider(histories, "/"))
   ], child: MyApp()));
   if (Platform.isWindows) {
     doWhenWindowReady(() {
@@ -61,20 +59,12 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Consumer<ThemeNotifier>(builder: (context, themeNotifier, child) {
       return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: themeNotifier.currentTheme,
-          darkTheme: darkTheme,
-          themeMode: themeNotifier.themeMode,
-          home: Stack(
-            children: [
-              Acrylic(
-                elevation: 10,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              AppStack(),
-            ],
-          ));
+        debugShowCheckedModeBanner: false,
+        theme: themeNotifier.currentTheme,
+        darkTheme: darkTheme,
+        themeMode: themeNotifier.themeMode,
+        home: AppStack(),
+      );
     });
   }
 }

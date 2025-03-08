@@ -2,11 +2,16 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:chat/src/pages/chat/expandable_panel.dart';
+import 'package:chat/src/pages/chat/highlight_view.dart';
+import 'package:chat/src/pages/chat/icon_button.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
+import 'package:chat/src/pages/settings/settings_view.dart';
 import 'package:chat/widgets/custom_tab/controller.dart';
 import 'package:chat/widgets/custom_tab/index.dart' as csTab;
+import 'package:chat/widgets/glass_widget/index.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_highlight/themes/github.dart';
 
 class TesPage extends StatefulWidget {
   @override
@@ -27,67 +32,38 @@ class _TesPageState extends State<TesPage> {
   final MaterialTextSelectionControls materialTextControls =
       MaterialTextSelectionControls();
   bool isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+
+  @override
+  void initState() {
+    super.initState();
+    controller.addListener(_updateUi);
+  }
+
+  void _updateUi() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    controller.removeListener(_updateUi);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(children: [
-          ExpandableContainer(
-            children: [
-              ToggleButton(
-                onSelected: (v) {},
-                icon: Icon(Icons.menu),
-                label: Text("搜索"),
-              ),
-              IconButton.filled(onPressed: () {}, icon: Icon(Icons.home)),
-              IconButton.filled(onPressed: () {}, icon: Icon(Icons.add)),
-              IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu)),
-              IconButton.filled(onPressed: () {}, icon: Icon(Icons.menu))
-            ],
-          ),
-          IconButton.filled(
-              onPressed: () {
-                setState(() {
-                  expand = !expand;
-                });
-              },
-              icon: Icon(Icons.arrow_drop_down)),
-          ExpandablePanel(
-            child: Text("hello world"),
-            expand: expand,
-          ),
-          _buildSelectMenu(context),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.menu),
-            padding: EdgeInsets.zero,
-            // iconSize: 12,
-            constraints: BoxConstraints.tight(Size(24, 24)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.only(left: 8, right: 8),
-              minimumSize: Size(65, 30), // 设置按钮的宽度和高度
-            ),
-            icon: Icon(Icons.send),
-            label: Text('发送'),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.grey,
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Text("千问"),
-          ),
-          Expanded(
-              child: csTab.CustomTab(
-            controller: controller,
-          ))
-        ]),
+        body: csTab.CustomTab(
+      controller: controller,
+      child: IndexedStack(
+        index: controller.selectedIndex,
+        children: [
+          MyWidget(title: "Home"),
+          MyWidget(title: "Add"),
+          MyWidget(title: "Home"),
+          MyWidget(title: "FaceRecognition"),
+        ],
       ),
-    );
+    ));
   }
 
   Widget _buildSelectMenu(BuildContext context) {
@@ -269,5 +245,131 @@ class _ExpandContainerState extends State<ExpandableContainer> {
                 ],
               ),
             )));
+  }
+}
+
+class MyWidget extends StatefulWidget {
+  final String title;
+  MyWidget({super.key, required this.title});
+
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+  @override
+  void initState() {}
+
+  @override
+  Widget build(BuildContext context) {
+    var code = '''import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+''';
+
+    return Scaffold(
+        body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: EdgeInsets.all(5),
+        child: TextField(
+          maxLines: 1,
+          keyboardType: TextInputType.url,
+          decoration: InputDecoration(
+              icon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CusIconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.refresh,
+                      size: 20,
+                    ),
+                    backgroundColor: Colors.transparent,
+                    shadow: false,
+                  ),
+                  CusIconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.home,
+                      size: 20,
+                    ),
+                    backgroundColor: Colors.transparent,
+                    shadow: false,
+                  )
+                ],
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                size: 20,
+              ),
+              suffixIcon: CusIconButton(
+                onPressed: () {},
+                icon: Icon(
+                  Icons.star,
+                  size: 20,
+                ),
+                backgroundColor: Colors.transparent,
+                shadow: false,
+              ),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(30)),
+                  borderSide: BorderSide.none),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(30)),
+                  borderSide:
+                      BorderSide(color: Theme.of(context).primaryColor)),
+              isDense: true,
+              constraints: BoxConstraints(maxHeight: 30),
+              contentPadding: EdgeInsets.all(0)),
+          style: TextStyle(
+            fontSize: 16,
+          ),
+        ),
+      ),
+      Stack(
+        children: [
+          const _AcrylicChildren(),
+          Positioned.fill(
+              child: Padding(
+                  padding: const EdgeInsets.all(12.0), child: Acrylic(
+                    elevation: 10,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  )))
+        ],
+      )
+    ]));
+  }
+}
+
+class _AcrylicChildren extends StatelessWidget {
+  const _AcrylicChildren();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(children: [
+      Container(
+        height: 200,
+        width: 100,
+        color: Colors.blue,
+      ),
+      Align(
+        alignment: AlignmentDirectional.center,
+        child: Container(
+          height: 152,
+          width: 152,
+          color: Colors.deepPurple,
+        ),
+      ),
+      Align(
+        alignment: AlignmentDirectional.bottomEnd,
+        child: Container(
+          height: 100,
+          width: 80,
+          color: Colors.yellow,
+        ),
+      ),
+    ]);
   }
 }

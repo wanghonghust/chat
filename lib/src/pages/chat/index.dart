@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:chat/conf.dart';
 import 'package:chat/env/env.dart';
 import 'package:chat/src/data_provider/index.dart';
 import 'package:chat/src/database/models/conversation.dart';
@@ -16,12 +17,6 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
-const Map<String, String> supportModels = {
-  "qwen-plus": "通义千问 Plus",
-  "deepseek-r1": "DeepSeek R1",
-  "deepseek-v3": "DeepSeek V3",
-};
 
 class ChatPage extends StatefulWidget {
   dynamic arguments;
@@ -338,7 +333,10 @@ class _ChatPageState extends State<ChatPage> {
                         Expanded(child: _buildStarMenu(context)),
                         SizedBox(width: 10),
                         CusIconButton(
-                          onPressed: sendMessage,
+                          onPressed:
+                              userMessage.trim().isEmpty && subscription != null
+                                  ? null
+                                  : sendMessage,
                           icon: Icon(
                             subscription == null
                                 ? Icons.send_rounded
@@ -347,11 +345,6 @@ class _ChatPageState extends State<ChatPage> {
                           ),
                         )
                       ],
-                    ),
-                    ExpandablePanel(
-                      expand: expand,
-                      child:
-                          SelectableText.rich(TextSpan(text: "asdasdasdasd")),
                     )
                   ],
                 ),
@@ -470,7 +463,8 @@ class _ChatPageState extends State<ChatPage> {
       int id = await Conversation.insertConversation(con);
       conversation = Conversation(title: userMessage, id: id);
       dataProvider.addConversation(conversation!);
-      dataProvider.setCurrentRoute("/chat:$id:${con.title}");
+      dataProvider.navigatorKey.currentState!
+          .pushNamed("/chat", arguments: conversation);
       setState(() {});
     }
     setState(() {

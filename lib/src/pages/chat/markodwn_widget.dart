@@ -19,7 +19,6 @@ class _MarkdownPageState extends State<MarkdownWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
     return SelectableRegion(
         focusNode: FocusNode(),
         selectionControls: materialTextControls,
@@ -57,7 +56,7 @@ class _MarkdownPageState extends State<MarkdownWidget>
                 borderRadius: const BorderRadius.all(Radius.circular(4))),
           ),
           builders: {
-            'pre': PreElementBuilder(context: context),
+            // 'pre': PreElementBuilder(context: context),
             'code': CodeElementBuilder(context: context)
           },
         ));

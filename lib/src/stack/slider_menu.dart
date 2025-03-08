@@ -68,62 +68,82 @@ class _SliderMenuState extends State<SliderMenu> {
 
   Widget buildItem(BuildContext context, SidebarItem item, bool active) {
     return Builder(builder: (context) {
-      final primaryColor = Theme.of(context).primaryColor;
-      return AnimatedContainer(
-        margin: EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-            color: active ? primaryColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(5)),
-        duration: Duration(milliseconds: 300),
-        height: 36,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(5),
-          onTap: () {
-            if (widget.navigatorKey != null) {
-              String? currentRoute = getCurrentRouteName(widget.navigatorKey!);
-              if (currentRoute != item.route) {
-                widget.navigatorKey!.currentState?.pushNamed(item.route!);
-              }
-            }
-            if (widget.onItemClick != null) {
-              widget.onItemClick!(item);
-            }
-            if (item.onTap != null) {
-              item.onTap!();
-            }
-          },
-          child: Row(
+      final bgColor = Theme.of(context).hoverColor;
+      return Padding(
+          padding: EdgeInsets.only(bottom: 10),
+          child: Stack(
+            alignment: AlignmentDirectional.centerStart,
             children: [
-              Padding(
-                  padding: EdgeInsets.only(left: 10, right: 10),
-                  child: item.icon),
-              Expanded(
-                child: Padding(
-                    padding: EdgeInsets.only(right: 10),
-                    child: DefaultTextStyle(
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.start,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: Theme.of(context).textTheme.bodyMedium!,
-                      child: item.title,
-                    )),
+              Container(
+                decoration: BoxDecoration(
+                    color: active ? bgColor : Colors.transparent,
+                    borderRadius: BorderRadius.circular(5)),
+                height: 36,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(5),
+                  onTap: () {
+                    if (widget.navigatorKey != null) {
+                      Route<dynamic>? currentRoute =
+                          getCurrentRoute(widget.navigatorKey!);
+
+                      if (currentRoute!.settings.name! != item.route ||
+                          (currentRoute.settings.name! == item.route &&
+                              currentRoute.settings.arguments != null)) {
+                        widget.navigatorKey!.currentState
+                            ?.pushNamed(item.route!);
+                      }
+                    }
+                    if (widget.onItemClick != null) {
+                      widget.onItemClick!(item);
+                    }
+                    if (item.onTap != null) {
+                      item.onTap!();
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      Padding(
+                          padding: EdgeInsets.only(left: 10, right: 10),
+                          child: item.icon),
+                      Expanded(
+                        child: Padding(
+                            padding: EdgeInsets.only(right: 10),
+                            child: DefaultTextStyle(
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.start,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: Theme.of(context).textTheme.bodyMedium!,
+                              child: item.title,
+                            )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeIn,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  borderRadius: BorderRadius.circular(1.5),
+                ),
+                width: 3,
+                height: active ? 24 : 0,
               ),
             ],
-          ),
-        ),
-      );
+          ));
     });
   }
 
-  String? getCurrentRouteName(GlobalKey<NavigatorState> navigatorKey) {
-    String? currentRouteName;
+  Route<dynamic>? getCurrentRoute(GlobalKey<NavigatorState> navigatorKey) {
+    Route<dynamic>? currentRoute;
     navigatorKey.currentState?.popUntil((route) {
       // 这里会依次遍历所有路由，最终 currentRouteName 为最后一次赋值，也就是栈顶路由的 name
-      currentRouteName = route.settings.name;
+      currentRoute = route;
       return true;
     });
-    return currentRouteName;
+    return currentRoute;
   }
 
   Widget _buildBottom(BuildContext context) {
@@ -180,45 +200,69 @@ class _SliderMenuState extends State<SliderMenu> {
     return ListView.builder(
       padding: EdgeInsets.all(10),
       itemBuilder: (context, index) {
-        String route =
-            "/chat:${widget.histories![index].id}:${widget.histories![index].title}";
-        return InkWell(
-          borderRadius: BorderRadius.all(Radius.circular(5)),
-          onTap: () {
-            widget.navigatorKey!.currentState?.pushNamed(route);
-          },
-          child: Container(
-            margin: EdgeInsets.only(bottom: 2),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(5)),
-              color: widget.activeKey == ValueKey(route)
-                  ? Theme.of(context).primaryColor
-                  : null,
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-            child: Row(
-              children: [
-                Expanded(
-                    child: Text(
-                  widget.histories![index].title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapDown: (details) {
-                    _showMenu(context, details.globalPosition,
-                        widget.histories![index]);
-                  },
-                  child: Icon(
-                    Icons.more_horiz,
-                    size: 16,
-                  ),
-                )
-              ],
-            ),
-          ),
-        );
+        return Padding(
+            padding: EdgeInsets.only(bottom: 2),
+            child: InkWell(
+                borderRadius: BorderRadius.all(Radius.circular(5)),
+                onTap: () {
+                  Route<dynamic>? currentRoute =
+                      getCurrentRoute(widget.navigatorKey!);
+                  if (currentRoute?.settings.arguments !=
+                      widget.histories![index]) {
+                    widget.navigatorKey!.currentState?.pushNamed('/chat',
+                        arguments: widget.histories![index]);
+                  }
+                },
+                child: Stack(
+                    alignment: AlignmentDirectional.centerStart,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(5)),
+                          color: widget.activeKey ==
+                                  ValueKey(
+                                      '/chat:${widget.histories![index].id}')
+                              ? Theme.of(context).hoverColor
+                              : null,
+                        ),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                        child: Row(
+                          children: [
+                            Expanded(
+                                child: Text(
+                              widget.histories![index].title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            )),
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTapDown: (details) {
+                                _showMenu(context, details.globalPosition,
+                                    widget.histories![index]);
+                              },
+                              child: Icon(
+                                Icons.more_horiz,
+                                size: 16,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      AnimatedContainer(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeIn,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.circular(1.5),
+                        ),
+                        width: 3,
+                        height: widget.activeKey ==
+                                ValueKey('/chat:${widget.histories![index].id}')
+                            ? 20
+                            : 0,
+                      ),
+                    ])));
       },
       itemCount: widget.histories!.length,
     );

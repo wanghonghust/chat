@@ -5,21 +5,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+typedef NullableIndexedWidgetBuilder = Widget? Function(
+    BuildContext context, int index);
+
 class CustomTab extends StatefulWidget {
+  final double? height;
   final CustomTabController controller;
   final EdgeInsetsGeometry padding;
   final double radius;
   final Color? backgroundColor;
   final Color? hoverColor;
   final Color? activeColor;
+  final Widget? child;
+  final NullableIndexedWidgetBuilder? newTabBuilder;
   const CustomTab({
     super.key,
     required this.controller,
     this.padding = const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
     this.radius = 8,
+    this.height = 35,
     this.backgroundColor,
     this.hoverColor,
     this.activeColor,
+    this.child,
+    this.newTabBuilder,
   });
 
   @override
@@ -28,6 +37,7 @@ class CustomTab extends StatefulWidget {
 
 class _CustomTabState extends State<CustomTab> {
   CsTabController _controller = CsTabController();
+  ScrollController _scrollController = ScrollController();
   final ButtonStyle _buttonStyle = ButtonStyle(
       shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(5))));
@@ -64,19 +74,20 @@ class _CustomTabState extends State<CustomTab> {
 
   List<Widget> getChildren() {
     List<Widget> children = [];
+    final int selectedIndex = widget.controller.selectedIndex;
     for (int i = 0; i < widget.controller.items.length; i++) {
       CsShape shape = CsShape.none;
-      if (_controller.currentIndex >= 0) {
-        if (i == _controller.currentIndex) {
+      if (selectedIndex >= 0) {
+        if (i == selectedIndex) {
           shape = CsShape.mShape;
-        } else if (i == _controller.currentIndex - 1) {
+        } else if (i == selectedIndex - 1) {
           shape = CsShape.lShape;
-        } else if (i == _controller.currentIndex + 1) {
+        } else if (i == selectedIndex + 1) {
           shape = CsShape.rShape;
         }
       }
 
-      if (_controller.hoverIndex >= 0 && !(i == _controller.currentIndex)) {
+      if (_controller.hoverIndex >= 0 && !(i == selectedIndex)) {
         if (i == _controller.hoverIndex) {
           shape = CsShape.mShape;
         } else if (i == _controller.hoverIndex) {
@@ -86,19 +97,19 @@ class _CustomTabState extends State<CustomTab> {
         } else if (i == _controller.hoverIndex + 1) {
           shape = CsShape.rShape;
         }
-        if (_controller.hoverIndex == _controller.currentIndex + 1) {
+        if (_controller.hoverIndex == selectedIndex + 1) {
           shape = CsShape.rShape;
-        } else if (_controller.hoverIndex == _controller.currentIndex - 1) {
+        } else if (_controller.hoverIndex == selectedIndex - 1) {
           shape = CsShape.lShape;
         }
       }
       if (_controller.hoverIndex >= 0 &&
           i == _controller.hoverIndex &&
-          _controller.currentIndex == -1) {
+          selectedIndex == -1) {
         shape = CsShape.mShape;
       }
-      if (_controller.currentIndex >= 0 && _controller.hoverIndex >= 0) {
-        if (i == _controller.currentIndex + 1 &&
+      if (selectedIndex >= 0 && _controller.hoverIndex >= 0) {
+        if (i == selectedIndex + 1 &&
             (i == _controller.hoverIndex - 1 ||
                 i == _controller.hoverIndex + 2)) {
           shape = CsShape.rShape;
@@ -122,9 +133,9 @@ class _CustomTabState extends State<CustomTab> {
           }
         },
         onTap: () {
-          _controller.setIndex(i);
+          widget.controller.changeTab(i);
         },
-        active: _controller.currentIndex == i,
+        active: widget.controller.selectedIndex == i,
         shape: shape,
         color: widget.backgroundColor ??
             (Theme.of(context).brightness == Brightness.dark
@@ -166,7 +177,7 @@ class _CustomTabState extends State<CustomTab> {
   Widget build(BuildContext context) {
     return DragTarget<TabItem>(builder: (context, accepted, rejected) {
       return Container(
-          alignment: Alignment.topCenter,
+          alignment: Alignment.center,
           color: widget.activeColor ??
               (Theme.of(context).brightness == Brightness.dark
                   ? const Color.fromARGB(255, 59, 59, 59)
@@ -174,6 +185,8 @@ class _CustomTabState extends State<CustomTab> {
           child: Column(
             children: [
               Container(
+                height: widget.height,
+                alignment: Alignment.bottomCenter,
                 decoration: BoxDecoration(
                   border: Border(
                       bottom: BorderSide(
@@ -189,28 +202,46 @@ class _CustomTabState extends State<CustomTab> {
                           ? const Color.fromARGB(255, 32, 32, 32)
                           : const Color.fromARGB(255, 205, 205, 205)),
                 ),
-                padding: EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 0),
-                child: Row(children: [
-                  _TabRenderWidget(
-                    backgroundColor: Colors.transparent,
-                    radius: widget.radius,
-                    padding: widget.padding,
-                    borderWidth: 1,
-                    controller: _controller,
-                    children: getChildren(),
-                  ),
-                  TabIconButton(
-                    onPressed: () {
-                      widget.controller.addTab(TabItem(icon: Icons.accessible,label: "New Tab"));
-                    },
-                    icon: Icon(
-                      Icons.add,
-                      size: 20,
+                padding: EdgeInsets.only(left: 5, right: 5, top: 0, bottom: 0),
+                child: LayoutBuilder(builder: (context, constraints) {
+                  return Row(children: [
+                    Container(
+                      constraints:
+                          BoxConstraints(maxWidth: constraints.maxWidth - 35),
+                      child: Scrollbar(
+                          thickness: 4,
+                          thumbVisibility: true,
+                          controller: _scrollController,
+                          child: SingleChildScrollView(
+                            controller: _scrollController,
+                            scrollDirection: Axis.horizontal,
+                            child: _TabRenderWidget(
+                              backgroundColor: Colors.transparent,
+                              radius: widget.radius,
+                              padding: widget.padding,
+                              borderWidth: 1,
+                              stateController: _controller,
+                              tabController: widget.controller,
+                              children: getChildren(),
+                            ),
+                          )),
                     ),
-                  )
-                ]),
+                    Padding(
+                        padding: EdgeInsets.only(left: 5),
+                        child: TabIconButton(
+                          onPressed: () {
+                            widget.controller.addTab(TabItem(
+                                icon: Icons.accessible, label: "New Tab"));
+                          },
+                          icon: Icon(
+                            Icons.add,
+                            size: 24,
+                          ),
+                        ))
+                  ]);
+                }),
               ),
-              Expanded(child: Container())
+              Expanded(child: widget.child ?? SizedBox.shrink())
             ],
           ));
     });
@@ -250,15 +281,8 @@ class _TabIconButtonState extends State<TabIconButton> {
 }
 
 class CsTabController extends ChangeNotifier {
-  int _currentIndex = -1;
   int _hoverIndex = -1;
-  int get currentIndex => _currentIndex;
   int get hoverIndex => _hoverIndex;
-
-  void setIndex(int index) {
-    _currentIndex = index;
-    notifyListeners();
-  }
 
   void setHoverIndex(int index) {
     _hoverIndex = index;
@@ -314,12 +338,14 @@ class _TabRenderWidget extends MultiChildRenderObjectWidget {
 
   final Color backgroundColor;
   final double borderWidth;
-  final CsTabController controller;
+  final CsTabController stateController;
+  final CustomTabController tabController;
   const _TabRenderWidget({
     required super.children,
     required this.radius,
     required this.padding,
-    required this.controller,
+    required this.stateController,
+    required this.tabController,
     required this.borderWidth,
     required this.backgroundColor,
   });
@@ -330,7 +356,8 @@ class _TabRenderWidget extends MultiChildRenderObjectWidget {
       radius: radius,
       padding: padding,
       borderWidth: borderWidth,
-      controller: controller,
+      stateController: stateController,
+      tabController: tabController,
       backgroundColor: backgroundColor,
     );
   }
@@ -341,7 +368,8 @@ class _TabRenderWidget extends MultiChildRenderObjectWidget {
     renderObject
       ..radius = radius
       ..padding = padding
-      ..controller = controller
+      ..stateController = stateController
+      ..tabController = tabController
       ..backgroundColor = backgroundColor;
   }
 
@@ -373,11 +401,13 @@ class TabRenderBox extends RenderBox
   EdgeInsetsGeometry padding;
   Color backgroundColor;
   final double borderWidth;
-  CsTabController controller;
+  CsTabController stateController;
+  CustomTabController tabController;
 
   TabRenderBox({
     required this.radius,
-    required this.controller,
+    required this.stateController,
+    required this.tabController,
     required this.padding,
     required this.borderWidth,
     required this.backgroundColor,
@@ -421,7 +451,7 @@ class TabRenderBox extends RenderBox
       ..color = const Color.fromARGB(255, 131, 131, 131)
       ..style = PaintingStyle.stroke;
     RenderBox child = children.first;
-    if (controller.currentIndex != 0 && controller.hoverIndex != 0) {
+    if (tabController.selectedIndex != 0 && stateController.hoverIndex != 0) {
       context.canvas.drawLine(
           Offset(startX + radius, startY + radius),
           Offset(startX + radius, startY + child.size.height - radius),
@@ -432,11 +462,11 @@ class TabRenderBox extends RenderBox
       final TabLayoutParentData childParentData =
           children[i].parentData! as TabLayoutParentData;
       context.paintChild(children[i], childParentData.offset + offset);
-      if (controller.currentIndex >= 0 || controller.hoverIndex >= 0) {
-        if (controller.currentIndex == i + 1 ||
-            controller.currentIndex == i ||
-            controller.hoverIndex == i + 1 ||
-            controller.hoverIndex == i) {
+      if (tabController.selectedIndex >= 0 || stateController.hoverIndex >= 0) {
+        if (tabController.selectedIndex == i + 1 ||
+            tabController.selectedIndex == i ||
+            stateController.hoverIndex == i + 1 ||
+            stateController.hoverIndex == i) {
           drawSplit = false;
         } else {
           drawSplit = true;

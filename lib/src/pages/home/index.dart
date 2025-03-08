@@ -53,10 +53,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void getOllamVersion() async {
-    VersionResponse versionResponse = await ollamClient.getVersion();
-    setState(() {
-      ollamVersion = versionResponse.version;
+  void getOllamVersion() {
+    ollamClient.getVersion().then((versionResponse) {
+      setState(() {
+        ollamVersion = versionResponse.version;
+      });
+    }).catchError((err){
     });
   }
 

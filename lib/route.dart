@@ -1,6 +1,8 @@
 import 'package:chat/src/pages/chat/index.dart';
+import 'package:chat/src/pages/chat/start.dart';
 import 'package:chat/src/pages/home/index.dart';
 import 'package:chat/src/pages/settings/settings_view.dart';
+import 'package:chat/src/pages/test/index.dart';
 import 'package:flutter/material.dart';
 
 typedef CustomBuilder = Widget Function(BuildContext context,dynamic arguments);
@@ -40,6 +42,15 @@ Map<String, RouteItem> routes = {
       Navigator.pushNamed(context, '/chat'),
     },
   ),
+  '/start': RouteItem(
+    route: '/start',
+    title: 'Chat',
+    icon: Icons.message,
+    builder: (context,arguments) => ChatStart(),
+    onTap: (context) => {
+      Navigator.pushNamed(context, '/start'),
+    },
+  ),
   '/settings': RouteItem(
     route: '/settings',
     title: 'Settings',
@@ -49,4 +60,15 @@ Map<String, RouteItem> routes = {
       Navigator.pushNamed(context, '/settings'),
     },
   ),
+  
+  '/test': RouteItem(
+    route: '/test',
+    title: 'test',
+    icon: Icons.flight,
+    builder: (context,arguments) => TesPage(),
+    onTap: (context) => {
+      Navigator.pushNamed(context, '/test'),
+    },
+  ),
 };
+

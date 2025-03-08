@@ -28,11 +28,8 @@ class CustomTabController extends ChangeNotifier {
         notifyListeners();
         return item;
       }
-      if (selectedIndex == index) {
-        selectedIndex = items.length - 1;
-        notifyListeners();
-      } else if (selectedIndex > index) {
-        selectedIndex -= 1;
+      if (index <=selectedIndex) {
+        selectedIndex = selectedIndex - 1;
         notifyListeners();
       }
       notifyListeners();
