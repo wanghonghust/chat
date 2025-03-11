@@ -6,6 +6,7 @@ class Message {
   final int conversationId;
   final int role; // 0 for user, 1 for bot
   final String model;
+  final String? thinkContent;
   final String content;
 
   Message({
@@ -14,6 +15,7 @@ class Message {
     required this.role,
     required this.model,
     required this.content,
+    this.thinkContent,
   });
 
   Map<String, Object?> toMap() {
@@ -22,6 +24,7 @@ class Message {
       'role': role,
       'model': model,
       'content': content,
+      'thinkContent': thinkContent,
     };
   }
 
@@ -40,11 +43,13 @@ class Message {
     );
   }
 
-  static Future<List<Message>> getConversationMessage(int conversationId) async {
+  static Future<List<Message>> getConversationMessage(
+      int conversationId) async {
     // Get a reference to the database.
     final db = await database;
 
-    final List<Map<String, Object?>> dogMaps = await db.query('messages',where: 'conversationId = ?', whereArgs: [conversationId]);
+    final List<Map<String, Object?>> dogMaps = await db.query('messages',
+        where: 'conversationId = ?', whereArgs: [conversationId]);
 
     return [
       for (final {
@@ -53,21 +58,28 @@ class Message {
             'role': role as int,
             'model': model as String,
             'content': content as String,
+            'thinkContent': thinkContent as String?,
           } in dogMaps)
         Message(
-            id: id,
-            conversationId: conversationId,
-            role: role,
-            model:model,
-            content: content),
+          id: id,
+          conversationId: conversationId,
+          role: role,
+          model: model,
+          content: content,
+          thinkContent: thinkContent,
+        ),
     ];
   }
-  static Future<List<Message>> getModelConversationMessage(int conversationId,String model) async {
+
+  static Future<List<Message>> getModelConversationMessage(
+      int conversationId, String model) async {
     // Get a reference to the database.
     final db = await database;
 
-    final List<Map<String, Object?>> dogMaps = await db.query('messages',where: 'conversationId = ? and model = ? ', whereArgs: [conversationId,model]);
-  
+    final List<Map<String, Object?>> dogMaps = await db.query('messages',
+        where: 'conversationId = ? and model = ? ',
+        whereArgs: [conversationId, model]);
+
     return [
       for (final {
             'id': id as int,
@@ -75,13 +87,16 @@ class Message {
             'role': role as int,
             'model': model as String,
             'content': content as String,
+            'thinkContent': thinkContent as String,
           } in dogMaps)
         Message(
-            id: id,
-            conversationId: conversationId,
-            role: role,
-            model:model,
-            content: content),
+          id: id,
+          conversationId: conversationId,
+          role: role,
+          model: model,
+          content: content,
+          thinkContent: thinkContent,
+        ),
     ];
   }
 }

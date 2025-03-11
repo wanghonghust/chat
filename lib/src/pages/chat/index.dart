@@ -32,7 +32,7 @@ class _ChatPageState extends State<ChatPage> {
   List<DropdownMenuItem<String>> models = [];
   List<Widget> items = [];
   bool done = true;
-  List<OpenAIChatCompletionChoiceMessageModel> orderedMessages = [];
+  List<dynamic> orderedMessages = [];
   String userMessage = "";
   TextEditingController textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -41,6 +41,7 @@ class _ChatPageState extends State<ChatPage> {
   bool network = false;
   bool autoScroll = true;
   bool selectModel = false;
+  bool isThinking = false;
   StreamSubscription? subscription;
   final FocusNode _focusNode = FocusNode();
   final MaterialTextSelectionControls materialTextControls =
@@ -200,25 +201,33 @@ class _ChatPageState extends State<ChatPage> {
                   ? ListView.builder(
                       controller: _msgScrollController,
                       itemBuilder: (context, index) {
-                        final String content =
-                            orderedMessages[index].content![0].text!;
-                        final String? bubleModel =
-                            orderedMessages[index].role ==
-                                    OpenAIChatMessageRole.user
-                                ? null
-                                : orderedMessages[index].name;
-                        return Padding(
-                            padding: EdgeInsets.all(10),
-                            child: _buildChatBubble(
-                                bubleModel == null
-                                    ? SelectableRegion(
-                                        focusNode: FocusNode(),
-                                        selectionControls: materialTextControls,
-                                        child: Text(content.trim()))
-                                    : MarkdownWidget(
-                                        text: content,
-                                      ),
-                                bubleModel));
+                        var item = orderedMessages[index];
+                        if (item is OpenAIChatCompletionChoiceMessageModel) {
+                          final String content = item.content![0].text!;
+                          final String? bubleModel =
+                              item.role == OpenAIChatMessageRole.user
+                                  ? null
+                                  : item.name;
+                          return Padding(
+                              padding: EdgeInsets.all(10),
+                              child: _buildChatBubble(
+                                  bubleModel == null
+                                      ? SelectableRegion(
+                                          focusNode: FocusNode(),
+                                          selectionControls:
+                                              materialTextControls,
+                                          child: Text(content.trim()))
+                                      : MarkdownWidget(
+                                          text: content,
+                                        ),
+                                  bubleModel));
+                        } else {
+                          String? thinkContent =
+                              orderedMessages[index] as String?;
+                          return Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Text(thinkContent!));
+                        }
                       },
                       itemCount: orderedMessages.length,
                     )
@@ -235,7 +244,8 @@ class _ChatPageState extends State<ChatPage> {
       String model) {
     List<OpenAIChatCompletionChoiceMessageModel> res = [];
     orderedMessages.forEach((item) {
-      if (item.name == model) {
+      if (item is OpenAIChatCompletionChoiceMessageModel &&
+          item.name == model) {
         res.add(item);
       }
     });
@@ -490,6 +500,7 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     StringBuffer responseBuffer = StringBuffer();
+    StringBuffer thinkBuffer = StringBuffer();
     OpenAI.apiKey = Env.key;
     OpenAI.baseUrl = "https://dashscope.aliyuncs.com/compatible-mode";
     final userMessage = OpenAIChatCompletionChoiceMessageModel(content: [
@@ -524,19 +535,39 @@ class _ChatPageState extends State<ChatPage> {
         content?.forEach((item) {
           if (item != null) {
             modelMessages = getCurrentModelMessages(chatModel);
-
-            responseBuffer.write(item.text);
-            var mm = OpenAIChatCompletionChoiceMessageModel(content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(
-                responseBuffer.toString(),
-              )
-            ], role: OpenAIChatMessageRole.assistant, name: chatModel);
-            setState(() {
-              orderedMessages[orderedMessages.length - 1] = mm;
-            });
-            if (autoScroll) {
-              _msgScrollController
-                  .jumpTo(_msgScrollController.position.maxScrollExtent);
+            var text = item.text;
+            if (text!.contains(RegExp("<think>"))) {
+              setState(() {
+                isThinking = true;
+              });
+              text = text.replaceFirst(RegExp("<think>"), "");
+              thinkBuffer.write(text);
+            } else if (text.contains("</think>")) {
+              setState(() {
+                isThinking = false;
+              });
+              text = text.replaceFirst(RegExp("</think>"), "");
+              thinkBuffer.write(text);
+            } else {
+              if (isThinking) {
+                thinkBuffer.write(text);
+                orderedMessages[orderedMessages.length - 1] =
+                    thinkBuffer.toString();
+              } else {
+                responseBuffer.write(text);
+                var res = OpenAIChatCompletionChoiceMessageModel(content: [
+                  OpenAIChatCompletionChoiceMessageContentItemModel.text(
+                    responseBuffer.toString(),
+                  )
+                ], role: OpenAIChatMessageRole.assistant, name: chatModel);
+                setState(() {
+                  orderedMessages[orderedMessages.length - 1] = res;
+                });
+                if (autoScroll) {
+                  _msgScrollController
+                      .jumpTo(_msgScrollController.position.maxScrollExtent);
+                }
+              }
             }
           }
         });
@@ -556,11 +587,11 @@ class _ChatPageState extends State<ChatPage> {
 
         Message assistantMsg = Message(
             content: responseBuffer.toString(),
+            thinkContent: thinkBuffer.toString(),
             conversationId: param!.conversation.id!,
             role: 1,
             model: chatModel);
         await Message.insertMessage(assistantMsg);
-
         responseBuffer.clear();
       },
     );
