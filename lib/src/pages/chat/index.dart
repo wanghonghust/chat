@@ -94,7 +94,9 @@ class _ChatPageState extends State<ChatPage> {
         role: role,
         name: item.model,
       );
-
+      if (item.thinkContent != null) {
+        orderedMessages.add(item.thinkContent);
+      }
       orderedMessages.add(chatModel);
     });
     setState(() {});
@@ -225,8 +227,15 @@ class _ChatPageState extends State<ChatPage> {
                           String? thinkContent =
                               orderedMessages[index] as String?;
                           return Padding(
-                              padding: EdgeInsets.all(10),
-                              child: Text(thinkContent!));
+                            padding: EdgeInsets.all(10),
+                            child: Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).hoverColor,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                padding: EdgeInsets.all(5),
+                                child: Text(thinkContent!)),
+                          );
                         }
                       },
                       itemCount: orderedMessages.length,
