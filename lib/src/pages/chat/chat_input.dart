@@ -215,7 +215,6 @@ class _ChatInputState extends State<ChatInput> {
       widget.onSend!(textEditingController.text);
     }
     textEditingController.clear();
-    print("send message: '${textEditingController.text}'");
   }
 
   Widget _buildStarMenu(BuildContext context) {
@@ -281,14 +280,6 @@ class _ChatInputState extends State<ChatInput> {
                 autoScroll = value;
               });
             }),
-        GestureDetector(
-          child: Icon(Icons.add),
-          onTap: () {
-            setState(() {
-              expand = !expand;
-            });
-          },
-        )
       ],
     );
   }

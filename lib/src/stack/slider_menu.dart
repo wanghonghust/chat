@@ -1,6 +1,7 @@
 import 'package:chat/src/data_provider/index.dart';
 import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/pages/chat/index.dart';
+import 'package:chat/src/types/chat_param.dart';
 import 'package:chat/widgets/sidebar/index.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -182,7 +183,7 @@ class _SliderMenuState extends State<SliderMenu> {
   Widget _buildNewChat(BuildContext context) {
     return ElevatedButton(
         onPressed: () {
-          widget.navigatorKey!.currentState?.pushNamed("/chat");
+          widget.navigatorKey!.currentState?.pushNamed("/start");
         },
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -207,10 +208,15 @@ class _SliderMenuState extends State<SliderMenu> {
                 onTap: () {
                   Route<dynamic>? currentRoute =
                       getCurrentRoute(widget.navigatorKey!);
-                  if (currentRoute?.settings.arguments !=
-                      widget.histories![index]) {
-                    widget.navigatorKey!.currentState?.pushNamed('/chat',
-                        arguments: widget.histories![index]);
+                  ChatParam? param = currentRoute!.settings.arguments == null
+                      ? null
+                      : currentRoute.settings.arguments as ChatParam;
+                  if (param == null ||
+                      param.conversation != widget.histories![index]) {
+                    ChatParam chatParam = ChatParam(
+                        conversation: widget.histories![index], isNew: false);
+                    widget.navigatorKey!.currentState
+                        ?.pushNamed('/chat', arguments: chatParam);
                   }
                 },
                 child: Stack(

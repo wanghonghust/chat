@@ -45,7 +45,7 @@ Map<String, RouteItem> routes = {
   '/start': RouteItem(
     route: '/start',
     title: 'Chat',
-    icon: Icons.message,
+    icon: Icons.mail,
     builder: (context,arguments) => ChatStart(),
     onTap: (context) => {
       Navigator.pushNamed(context, '/start'),

@@ -6,7 +6,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   awesome_notifications
   bitsdojo_window_windows
   flutter_acrylic
-  flutter_inappwebview_windows
   url_launcher_windows
 )
 

@@ -12,6 +12,7 @@ import 'package:chat/src/pages/chat/toggle_button.dart';
 import 'package:chat/src/pages/home/index.dart';
 import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/test/index.dart';
+import 'package:chat/src/types/chat_param.dart';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +27,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  Conversation? conversation;
+  ChatParam? param;
   String? model = "qwen-plus";
   List<DropdownMenuItem<String>> models = [];
   List<Widget> items = [];
@@ -61,13 +62,22 @@ class _ChatPageState extends State<ChatPage> {
       ));
     });
     if (widget.arguments != null) {
-      conversation = widget.arguments as Conversation;
+      param = widget.arguments as ChatParam;
+      if (param!.isNew) {
+        // print(param!.conversation.title);
+        textEditingController.text = param!.conversation.title;
+        userMessage = param!.conversation.title;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          sendMessage();
+        });
+      }
       fetchData();
     }
   }
 
   void fetchData() async {
-    List<Message> mes = await Message.getConversationMessage(conversation!.id!);
+    List<Message> mes =
+        await Message.getConversationMessage(param!.conversation.id!);
     mes.forEach((item) {
       OpenAIChatMessageRole role = item.role == 0
           ? OpenAIChatMessageRole.user
@@ -177,7 +187,7 @@ class _ChatPageState extends State<ChatPage> {
             Padding(
                 padding: EdgeInsets.only(left: 20, right: 20),
                 child: Text(
-                  conversation?.title ?? "Chat",
+                  param!.conversation.title,
                   maxLines: 1,
                   style: TextStyle(
                     overflow: TextOverflow.ellipsis,
@@ -456,17 +466,14 @@ class _ChatPageState extends State<ChatPage> {
       return;
     }
 
-    AppDataProvider dataProvider =
-        Provider.of<AppDataProvider>(context, listen: false);
-    if (conversation == null && userMessage.trim().isNotEmpty) {
-      Conversation con = Conversation(title: userMessage);
-      int id = await Conversation.insertConversation(con);
-      conversation = Conversation(title: userMessage, id: id);
-      dataProvider.addConversation(conversation!);
-      dataProvider.navigatorKey.currentState!
-          .pushNamed("/chat", arguments: conversation);
-      setState(() {});
-    }
+    // AppDataProvider dataProvider =
+    //     Provider.of<AppDataProvider>(context, listen: false);
+    // if (userMessage.trim().isNotEmpty) {
+    //   Conversation con = Conversation(title: userMessage);
+    //   int id = await Conversation.insertConversation(con);
+    //   Conversation conversation = Conversation(title: userMessage, id: id);
+    //   dataProvider.addConversation(conversation);
+    // }
     setState(() {
       textEditingController.clear();
       if (userMessage.trim().isNotEmpty) {
@@ -539,21 +546,21 @@ class _ChatPageState extends State<ChatPage> {
           done = true;
           subscription = null;
         });
-        if (conversation != null) {
-          Message userMsg = Message(
-              content: message,
-              conversationId: conversation!.id!,
-              role: 0,
-              model: model!);
-          await Message.insertMessage(userMsg);
 
-          Message assistantMsg = Message(
-              content: responseBuffer.toString(),
-              conversationId: conversation!.id!,
-              role: 1,
-              model: chatModel);
-          await Message.insertMessage(assistantMsg);
-        }
+        Message userMsg = Message(
+            content: message,
+            conversationId: param!.conversation.id!,
+            role: 0,
+            model: model!);
+        await Message.insertMessage(userMsg);
+
+        Message assistantMsg = Message(
+            content: responseBuffer.toString(),
+            conversationId: param!.conversation.id!,
+            role: 1,
+            model: chatModel);
+        await Message.insertMessage(assistantMsg);
+
         responseBuffer.clear();
       },
     );

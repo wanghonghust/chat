@@ -11,6 +11,7 @@ import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/stack/blur_container.dart';
 import 'package:chat/src/stack/slider_menu.dart';
 import 'package:chat/src/stack/window_buttons.dart';
+import 'package:chat/src/types/chat_param.dart';
 import 'package:chat/widgets/sidebar/index.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
@@ -52,10 +53,10 @@ class _AppStackState extends State<AppStack> with RouteAware {
     Route<dynamic>? route = getCurrentRoute(dataProvider!.navigatorKey);
     setState(() {
       if (route != null && route.settings.name != null) {
-        Conversation? conversation = route.settings.arguments as Conversation?;
-        if (conversation != null) {
+        ChatParam? param = route.settings.arguments as ChatParam?;
+        if (param != null) {
           dataProvider!
-              .setCurrentRoute('${route.settings.name!}:${conversation.id}');
+              .setCurrentRoute('${route.settings.name!}:${param.conversation.id}');
         } else {
           dataProvider!.setCurrentRoute(route.settings.name!);
         }
@@ -159,7 +160,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
                     child: Padding(
                       padding: EdgeInsets.all(5),
                       child: const Icon(
-                        Icons.arrow_back_outlined,
+                        Icons.navigate_before,
                       ),
                     ),
                     onTap: () {

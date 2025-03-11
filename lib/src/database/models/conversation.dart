@@ -31,6 +31,15 @@ class Conversation {
     );
   }
 
+  Future<int> save() async {
+    final db = await database;
+    return db.insert(
+      'conversations',
+      toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   static Future<List<Conversation>> getConversations() async {
     // Get a reference to the database.
     final db = await database;
