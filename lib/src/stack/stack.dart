@@ -12,6 +12,7 @@ import 'package:chat/src/stack/blur_container.dart';
 import 'package:chat/src/stack/slider_menu.dart';
 import 'package:chat/src/stack/window_buttons.dart';
 import 'package:chat/src/types/chat_param.dart';
+import 'package:chat/widgets/popup/custom_popup.dart';
 import 'package:chat/widgets/sidebar/index.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
@@ -55,8 +56,8 @@ class _AppStackState extends State<AppStack> with RouteAware {
       if (route != null && route.settings.name != null) {
         ChatParam? param = route.settings.arguments as ChatParam?;
         if (param != null) {
-          dataProvider!
-              .setCurrentRoute('${route.settings.name!}:${param.conversation.id}');
+          dataProvider!.setCurrentRoute(
+              '${route.settings.name!}:${param.conversation.id}');
         } else {
           dataProvider!.setCurrentRoute(route.settings.name!);
         }
@@ -124,7 +125,7 @@ class _AppStackState extends State<AppStack> with RouteAware {
     bool isSmallScreen = MediaQuery.of(context).size.width < 600;
     List<SidebarItem> items = [];
     routes.forEach((key, value) {
-      if(key == '/chat'){
+      if (key == '/chat') {
         return;
       }
       items.add(SidebarItem(
@@ -183,7 +184,20 @@ class _AppStackState extends State<AppStack> with RouteAware {
                     child: Container(
                       padding: EdgeInsets.all(5),
                       width: 300,
-                      child: DropDownSearch(),
+                      child: CustomPopup(
+                          backgroundColor: Colors.white.withAlpha(100),
+                          barrierColor: Colors.transparent,
+                          showArrow: true,
+                          content: SizedBox(
+                            width: 300,
+                            child: CalendarDatePicker(
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now(),
+                              onDateChanged: (v) {},
+                            ),
+                          ),
+                          child: TextField()),
                     ),
                   ))),
                 if (isDesktop) const WindowButtons()

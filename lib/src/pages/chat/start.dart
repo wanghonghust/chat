@@ -12,7 +12,7 @@ class ChatStart extends StatefulWidget {
 }
 
 class _ChatStartState extends State<ChatStart> {
-  String? model = "qwen-plus";
+  String? model = "qwq-plus";
   AppDataProvider? dataProvider;
   @override
   void didChangeDependencies() {
@@ -60,11 +60,19 @@ class _ChatStartState extends State<ChatStart> {
   }
 
   void onSend(String message) {
-    Conversation conversation = Conversation(title: message);
+    String title =
+        message.trim().replaceAll(RegExp(r"[\n\r]", multiLine: true), "");
+    title = title.length > 10 ? title.substring(0, 20) : title;
+    Conversation conversation = Conversation(title: title);
     conversation.save().then((id) {
-      conversation = Conversation(id: id, title: message);
+      conversation = Conversation(id: id, title: title);
       dataProvider!.addConversation(conversation);
-      ChatParam chatParam = ChatParam(conversation: conversation, isNew: true);
+      ChatParam chatParam = ChatParam(
+        conversation: conversation,
+        isNew: true,
+        model: model,
+        message: message,
+      );
       dataProvider!.navigatorKey.currentState!
           .pushNamed("/chat", arguments: chatParam);
     });

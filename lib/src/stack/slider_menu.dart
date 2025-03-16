@@ -181,7 +181,7 @@ class _SliderMenuState extends State<SliderMenu> {
   }
 
   Widget _buildNewChat(BuildContext context) {
-    return ElevatedButton(
+    return FilledButton.tonal(
         onPressed: () {
           widget.navigatorKey!.currentState?.pushNamed("/start");
         },
@@ -192,7 +192,7 @@ class _SliderMenuState extends State<SliderMenu> {
             SizedBox(
               width: 10,
             ),
-            Icon(Icons.edit_note)
+            Icon(Icons.add)
           ],
         ));
   }

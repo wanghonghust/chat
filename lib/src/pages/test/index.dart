@@ -24,10 +24,16 @@ class _TesPageState extends State<TesPage> {
   String? selectedValue;
   CustomTabController controller =
       CustomTabController(selectedIndex: 0, items: [
-    csTab.TabItem(label: "Home", icon: Icons.home),
-    csTab.TabItem(label: "Add", icon: Icons.add),
-    csTab.TabItem(label: "Home", icon: Icons.home),
-    csTab.TabItem(label: "FaceRecognition", icon: Icons.face),
+    csTab.TabItem(
+        label: "Home", icon: Icon(Icons.home), body: MyWidget(title: "Home")),
+    csTab.TabItem(
+        label: "Add", icon: Icon(Icons.add), body: MyWidget(title: "Add")),
+    csTab.TabItem(
+        label: "Home", icon: Icon(Icons.home), body: MyWidget(title: "Home")),
+    csTab.TabItem(
+        label: "FaceRecognition",
+        icon: Icon(Icons.face),
+        body: MyWidget(title: "FaceRecognition")),
   ]);
   final MaterialTextSelectionControls materialTextControls =
       MaterialTextSelectionControls();
@@ -49,20 +55,21 @@ class _TesPageState extends State<TesPage> {
     super.dispose();
   }
 
+  void newTab() {
+    controller.addTab(csTab.TabItem(
+        label: "Home", icon: Icon(Icons.home), body: MyWidget(title: "Home")));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         body: csTab.CustomTab(
       controller: controller,
-      child: IndexedStack(
-        index: controller.selectedIndex,
-        children: [
-          MyWidget(title: "Home"),
-          MyWidget(title: "Add"),
-          MyWidget(title: "Home"),
-          MyWidget(title: "FaceRecognition"),
-        ],
-      ),
+      // onPressAdd: newTab,
+      defaultTab: csTab.TabItem(
+          label: "New Tab",
+          icon: Icon(Icons.tab),
+          body: Center(child: Text("New Tab"))),
     ));
   }
 
@@ -333,11 +340,17 @@ void main() {
           const _AcrylicChildren(),
           Positioned.fill(
               child: Padding(
-                  padding: const EdgeInsets.all(12.0), child: Acrylic(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Acrylic(
                     elevation: 10,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   )))
         ],
+      ),
+      ExpandablePanel(
+        expand: true,
+        child: Text(widget.title),
       )
     ]));
   }

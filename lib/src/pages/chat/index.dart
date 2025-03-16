@@ -2,14 +2,12 @@ import 'dart:async';
 
 import 'package:chat/conf.dart';
 import 'package:chat/env/env.dart';
-import 'package:chat/src/data_provider/index.dart';
-import 'package:chat/src/database/models/conversation.dart';
 import 'package:chat/src/database/models/message.dart';
+import 'package:chat/src/pages/chat/chat_input.dart';
 import 'package:chat/src/pages/chat/expandable_panel.dart';
 import 'package:chat/src/pages/chat/icon_button.dart';
 import 'package:chat/src/pages/chat/markodwn_widget.dart';
 import 'package:chat/src/pages/chat/toggle_button.dart';
-import 'package:chat/src/pages/home/index.dart';
 import 'package:chat/src/pages/settings/controller.dart';
 import 'package:chat/src/pages/test/index.dart';
 import 'package:chat/src/types/chat_param.dart';
@@ -28,11 +26,11 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   ChatParam? param;
-  String? model = "qwen-plus";
+  String? model;
   List<DropdownMenuItem<String>> models = [];
   List<Widget> items = [];
   bool done = true;
-  List<dynamic> orderedMessages = [];
+  List<Message> orderedMessages = [];
   String userMessage = "";
   TextEditingController textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -64,42 +62,26 @@ class _ChatPageState extends State<ChatPage> {
     });
     if (widget.arguments != null) {
       param = widget.arguments as ChatParam;
+      model = param!.model ?? 'qwq-plus';
       if (param!.isNew) {
-        // print(param!.conversation.title);
         textEditingController.text = param!.conversation.title;
-        userMessage = param!.conversation.title;
+        assert(param!.message != null);
+        userMessage = param!.message!;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           sendMessage();
         });
+      } else {
+        fetchData();
       }
-      fetchData();
     }
   }
 
   void fetchData() async {
     List<Message> mes =
         await Message.getConversationMessage(param!.conversation.id!);
-    mes.forEach((item) {
-      OpenAIChatMessageRole role = item.role == 0
-          ? OpenAIChatMessageRole.user
-          : OpenAIChatMessageRole.assistant;
-
-      OpenAIChatCompletionChoiceMessageModel chatModel =
-          OpenAIChatCompletionChoiceMessageModel(
-        content: [
-          OpenAIChatCompletionChoiceMessageContentItemModel.text(
-            item.content,
-          ),
-        ],
-        role: role,
-        name: item.model,
-      );
-      if (item.thinkContent != null) {
-        orderedMessages.add(item.thinkContent);
-      }
-      orderedMessages.add(chatModel);
+    setState(() {
+      orderedMessages = mes;
     });
-    setState(() {});
   }
 
   @override
@@ -204,39 +186,49 @@ class _ChatPageState extends State<ChatPage> {
                       controller: _msgScrollController,
                       itemBuilder: (context, index) {
                         var item = orderedMessages[index];
-                        if (item is OpenAIChatCompletionChoiceMessageModel) {
-                          final String content = item.content![0].text!;
-                          final String? bubleModel =
-                              item.role == OpenAIChatMessageRole.user
-                                  ? null
-                                  : item.name;
-                          return Padding(
-                              padding: EdgeInsets.all(10),
-                              child: _buildChatBubble(
-                                  bubleModel == null
-                                      ? SelectableRegion(
-                                          focusNode: FocusNode(),
-                                          selectionControls:
-                                              materialTextControls,
-                                          child: Text(content.trim()))
-                                      : MarkdownWidget(
-                                          text: content,
-                                        ),
-                                  bubleModel));
-                        } else {
-                          String? thinkContent =
-                              orderedMessages[index] as String?;
-                          return Padding(
+
+                        final String content = item.content;
+                        final String? bubleModel =
+                            item.role == 0 ? null : item.model;
+                        return Padding(
                             padding: EdgeInsets.all(10),
-                            child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).hoverColor,
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                padding: EdgeInsets.all(5),
-                                child: Text(thinkContent!)),
-                          );
-                        }
+                            child: _buildChatBubble(
+                                Column(children: [
+                                  if (item.thinkContent != null)
+                                    ExpandablePanel(
+                                      expand: true,
+                                      title: Text(
+                                        "思考过程",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      child: Container(
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                            border: Border(
+                                          left: BorderSide(
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            width: 3,
+                                          ),
+                                        )),
+                                        child: MarkdownWidget(
+                                          text: item.thinkContent!.trim(),
+                                        ),
+                                      ),
+                                    ),
+                                  if (item.thinkContent != null) Divider(),
+                                  if (bubleModel == null)
+                                    SelectableRegion(
+                                        focusNode: FocusNode(),
+                                        selectionControls: materialTextControls,
+                                        child: Text(content.trim()))
+                                  else
+                                    MarkdownWidget(
+                                      text: content,
+                                    )
+                                ]),
+                                bubleModel));
                       },
                       itemCount: orderedMessages.length,
                     )
@@ -249,12 +241,10 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  List<OpenAIChatCompletionChoiceMessageModel> getCurrentModelMessages(
-      String model) {
-    List<OpenAIChatCompletionChoiceMessageModel> res = [];
+  List<Message> getCurrentModelMessages(String model) {
+    List<Message> res = [];
     orderedMessages.forEach((item) {
-      if (item is OpenAIChatCompletionChoiceMessageModel &&
-          item.name == model) {
+      if (item.model == model) {
         res.add(item);
       }
     });
@@ -329,15 +319,33 @@ class _ChatPageState extends State<ChatPage> {
                 child: Column(
                   children: [
                     Expanded(
-                        child: KeyboardListener(
-                            onKeyEvent: (event) {
-                              if (event is KeyDownEvent &&
-                                  event.logicalKey ==
-                                      LogicalKeyboardKey.enter) {
-                                sendMessage();
-                              }
-                            },
-                            focusNode: _focusNode,
+                      child: Shortcuts(
+                        shortcuts: <LogicalKeySet, Intent>{
+                          LogicalKeySet(LogicalKeyboardKey.enter):
+                              SubmitActionIndent(),
+                          LogicalKeySet(LogicalKeyboardKey.shift,
+                              LogicalKeyboardKey.enter): InsertNewLineIntent()
+                        },
+                        child: Actions(
+                          actions: <Type, Action<Intent>>{
+                            SubmitActionIndent: CallbackAction(
+                              onInvoke: (intent) {
+                                if (textEditingController.text
+                                    .trim()
+                                    .isNotEmpty) {
+                                  sendMessage();
+                                }
+                                return true;
+                              },
+                            ),
+                            InsertNewLineIntent:
+                                CallbackAction(onInvoke: (intent) {
+                              textEditingController.text += "\n";
+                              return true;
+                            }),
+                          },
+                          child: Focus(
+                            autofocus: true,
                             child: TextField(
                               onChanged: (value) {
                                 setState(() {
@@ -354,7 +362,11 @@ class _ChatPageState extends State<ChatPage> {
                                   border: InputBorder.none),
                               keyboardType: TextInputType.multiline,
                               maxLines: null,
-                            ))),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                     SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -517,33 +529,46 @@ class _ChatPageState extends State<ChatPage> {
         message,
       ),
     ], role: OpenAIChatMessageRole.user, name: chatModel);
-
+    Message userMsg = Message(
+        content: message,
+        conversationId: param!.conversation.id!,
+        role: 0,
+        model: model!);
     setState(() {
-      orderedMessages.add(userMessage);
+      orderedMessages.add(userMsg);
     });
 
-    List<OpenAIChatCompletionChoiceMessageModel> modelMessages =
-        getCurrentModelMessages(chatModel);
+    List<Message> messages = getCurrentModelMessages(chatModel);
+    List<OpenAIChatCompletionChoiceMessageModel> modelMessages = [];
+    messages.forEach((element) {
+      modelMessages.add(OpenAIChatCompletionChoiceMessageModel(
+          content: [
+            OpenAIChatCompletionChoiceMessageContentItemModel.text(
+              element.content,
+            )
+          ],
+          role: element.role == 0
+              ? OpenAIChatMessageRole.user
+              : OpenAIChatMessageRole.assistant,
+          name: chatModel));
+    });
     final chatStream = OpenAI.instance.chat.createStream(
       model: chatModel,
       messages: modelMessages,
     );
-
-    var resModel = OpenAIChatCompletionChoiceMessageModel(content: [
-      OpenAIChatCompletionChoiceMessageContentItemModel.text(
-        "",
-      )
-    ], role: OpenAIChatMessageRole.assistant, name: chatModel);
     setState(() {
-      orderedMessages.add(resModel);
+      orderedMessages.add(Message(
+          content: "",
+          conversationId: param!.conversation.id!,
+          role: 1,
+          model: chatModel));
     });
-
     subscription = chatStream.listen(
       (streamChatCompletion) {
         final content = streamChatCompletion.choices.first.delta.content;
         content?.forEach((item) {
           if (item != null) {
-            modelMessages = getCurrentModelMessages(chatModel);
+            messages = getCurrentModelMessages(chatModel);
             var text = item.text;
             if (text!.contains(RegExp("<think>"))) {
               setState(() {
@@ -555,27 +580,35 @@ class _ChatPageState extends State<ChatPage> {
               setState(() {
                 isThinking = false;
               });
-              text = text.replaceFirst(RegExp("</think>"), "");
-              thinkBuffer.write(text);
+              var parts = text.split("</think>");
+              if (parts.length == 2) {
+                if (parts[1].trim().isNotEmpty) {
+                  thinkBuffer.write(parts[0]);
+                } else {
+                  thinkBuffer.write(parts[0]);
+                  responseBuffer.write(parts[1]);
+                }
+              }
             } else {
               if (isThinking) {
                 thinkBuffer.write(text);
-                orderedMessages[orderedMessages.length - 1] =
-                    thinkBuffer.toString();
               } else {
                 responseBuffer.write(text);
-                var res = OpenAIChatCompletionChoiceMessageModel(content: [
-                  OpenAIChatCompletionChoiceMessageContentItemModel.text(
-                    responseBuffer.toString(),
-                  )
-                ], role: OpenAIChatMessageRole.assistant, name: chatModel);
-                setState(() {
-                  orderedMessages[orderedMessages.length - 1] = res;
-                });
-                if (autoScroll) {
-                  _msgScrollController
-                      .jumpTo(_msgScrollController.position.maxScrollExtent);
-                }
+              }
+              Message assistantMsg = Message(
+                  content: responseBuffer.toString(),
+                  thinkContent: thinkBuffer.toString().trim().isEmpty
+                      ? null
+                      : thinkBuffer.toString(),
+                  conversationId: param!.conversation.id!,
+                  role: 1,
+                  model: chatModel);
+              setState(() {
+                orderedMessages[orderedMessages.length - 1] = assistantMsg;
+              });
+              if (autoScroll) {
+                _msgScrollController
+                    .jumpTo(_msgScrollController.position.maxScrollExtent);
               }
             }
           }
@@ -586,12 +619,6 @@ class _ChatPageState extends State<ChatPage> {
           done = true;
           subscription = null;
         });
-
-        Message userMsg = Message(
-            content: message,
-            conversationId: param!.conversation.id!,
-            role: 0,
-            model: model!);
         await Message.insertMessage(userMsg);
 
         Message assistantMsg = Message(

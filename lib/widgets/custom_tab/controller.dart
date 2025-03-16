@@ -9,6 +9,10 @@ class CustomTabController extends ChangeNotifier {
 
   CustomTabController({required this.selectedIndex, required this.items});
 
+  List<Widget> getContents() {
+    return items.map((item) => item.body).toList();
+  }
+
   // 切换Tab
   void changeTab(int index) {
     selectedIndex = index;
@@ -17,6 +21,7 @@ class CustomTabController extends ChangeNotifier {
 
   void addTab(TabItem item) {
     items.add(item);
+    selectedIndex = items.length - 1;
     notifyListeners();
   }
 
@@ -28,9 +33,10 @@ class CustomTabController extends ChangeNotifier {
         notifyListeners();
         return item;
       }
-      if (index <=selectedIndex) {
+      if (index <= selectedIndex) {
         selectedIndex = selectedIndex - 1;
-        notifyListeners();
+      }else{
+        selectedIndex = selectedIndex;
       }
       notifyListeners();
       return item;

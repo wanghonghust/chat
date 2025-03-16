@@ -3,32 +3,29 @@ import 'dart:math';
 import 'package:chat/widgets/custom_tab/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-typedef NullableIndexedWidgetBuilder = Widget? Function(
-    BuildContext context, int index);
 
 class CustomTab extends StatefulWidget {
   final double? height;
+  final TabItem defaultTab;
   final CustomTabController controller;
   final EdgeInsetsGeometry padding;
   final double radius;
   final Color? backgroundColor;
   final Color? hoverColor;
   final Color? activeColor;
-  final Widget? child;
-  final NullableIndexedWidgetBuilder? newTabBuilder;
+
+  final Function? onPressAdd;
   const CustomTab({
     super.key,
     required this.controller,
+    required this.defaultTab,
     this.padding = const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
     this.radius = 8,
     this.height = 35,
     this.backgroundColor,
     this.hoverColor,
     this.activeColor,
-    this.child,
-    this.newTabBuilder,
+    this.onPressAdd,
   });
 
   @override
@@ -36,16 +33,16 @@ class CustomTab extends StatefulWidget {
 }
 
 class _CustomTabState extends State<CustomTab> {
-  CsTabController _controller = CsTabController();
-  ScrollController _scrollController = ScrollController();
-  final ButtonStyle _buttonStyle = ButtonStyle(
-      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(5))));
+  final CsTabController _controller = CsTabController();
+  final ScrollController _scrollController = ScrollController();
+  late PageController _pageController;
   @override
   void initState() {
     super.initState();
     _controller.addListener(_updateUi);
     widget.controller.addListener(_updateUi);
+    _pageController =
+        PageController(initialPage: widget.controller.selectedIndex);
   }
 
   @override
@@ -57,6 +54,14 @@ class _CustomTabState extends State<CustomTab> {
 
   void _updateUi() {
     setState(() {});
+  }
+
+  void _gotoPage(int index) {
+    _pageController.animateToPage(
+      index,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.ease,
+    );
   }
 
   Color getRandomColor() {
@@ -134,6 +139,7 @@ class _CustomTabState extends State<CustomTab> {
         },
         onTap: () {
           widget.controller.changeTab(i);
+          _gotoPage(i);
         },
         active: widget.controller.selectedIndex == i,
         shape: shape,
@@ -146,10 +152,9 @@ class _CustomTabState extends State<CustomTab> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              widget.controller.items[i].icon,
-              size: 16,
-            ),
+            IconTheme(
+                data: IconThemeData(size: 18),
+                child: widget.controller.items[i].icon),
             SizedBox(
               width: 5,
             ),
@@ -160,6 +165,11 @@ class _CustomTabState extends State<CustomTab> {
             TabIconButton(
               onPressed: () {
                 widget.controller.removeTab(i);
+                if (widget.controller.items.isEmpty) {
+                  widget.controller.addTab(widget.defaultTab);
+                  widget.controller.changeTab(0);
+                }
+                _gotoPage(widget.controller.selectedIndex);
               },
               icon: Icon(
                 Icons.close,
@@ -230,8 +240,12 @@ class _CustomTabState extends State<CustomTab> {
                         padding: EdgeInsets.only(left: 5),
                         child: TabIconButton(
                           onPressed: () {
-                            widget.controller.addTab(TabItem(
-                                icon: Icons.accessible, label: "New Tab"));
+                            if (widget.onPressAdd != null) {
+                              widget.onPressAdd!();
+                            } else {
+                              widget.controller.addTab(widget.defaultTab);
+                              _gotoPage(widget.controller.selectedIndex);
+                            }
                           },
                           icon: Icon(
                             Icons.add,
@@ -241,7 +255,14 @@ class _CustomTabState extends State<CustomTab> {
                   ]);
                 }),
               ),
-              Expanded(child: widget.child ?? SizedBox.shrink())
+              Expanded(
+                  child: PageView(
+                physics: ClampingScrollPhysics(),
+                controller: _pageController,
+                children: widget.controller.getContents().map((content) {
+                  return _KeepAlivePage(child: content);
+                }).toList(),
+              ))
             ],
           ));
     });
@@ -292,13 +313,19 @@ class CsTabController extends ChangeNotifier {
 
 class TabItem {
   final String label;
-  final IconData icon;
-  TabItem({required this.label, required this.icon});
+  final Widget icon;
+  final Widget body;
+  TabItem({
+    required this.label,
+    required this.icon,
+    required this.body,
+  });
 }
 
 class TabBarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
+    print("paint:$size");
     const double radius = 8;
     const double width = 120;
     double start = 100;
@@ -327,7 +354,6 @@ class TabBarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // TODO: implement shouldRepaint
     return true;
   }
 }
@@ -557,7 +583,7 @@ class _ShapeButtonState extends State<ShapeButton> {
           ),
         ),
         child: ClipPath(
-          clipper: ShapClipper(
+          clipper: ShapeClipper(
             shape: widget.shape,
             radius: widget.radius,
             padding: widget.padding,
@@ -593,12 +619,15 @@ class _ShapeButtonState extends State<ShapeButton> {
 
 enum CsShape { lShape, mShape, rShape, none }
 
-class ShapClipper extends CustomClipper<Path> {
+class ShapeClipper extends CustomClipper<Path> {
   final CsShape shape;
   final double radius;
   final EdgeInsetsGeometry padding;
-  const ShapClipper(
-      {required this.shape, required this.radius, required this.padding});
+  const ShapeClipper({
+    required this.shape,
+    required this.radius,
+    required this.padding,
+  });
 
   @override
   Path getClip(Size size) {
@@ -634,7 +663,28 @@ class ShapClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(covariant ShapClipper oldClipper) {
+  bool shouldReclip(covariant ShapeClipper oldClipper) {
     return true; // 如果 shape 发生变化，则返回 true 以重新绘制
+  }
+}
+
+class _KeepAlivePage extends StatefulWidget {
+  final Widget child;
+
+  _KeepAlivePage({required this.child});
+
+  @override
+  _KeepAlivePageState createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin<_KeepAlivePage> {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
