@@ -36,6 +36,7 @@ class _CustomTabState extends State<CustomTab> {
   final CsTabController _controller = CsTabController();
   final ScrollController _scrollController = ScrollController();
   late PageController _pageController;
+  int? dragIndex;
   @override
   void initState() {
     super.initState();
@@ -120,7 +121,7 @@ class _CustomTabState extends State<CustomTab> {
           shape = CsShape.rShape;
         }
       }
-
+      var item = widget.controller.items[i];
       children.add(ShapeButton(
         activeColor: widget.activeColor ??
             (Theme.of(context).brightness == Brightness.dark
@@ -141,6 +142,23 @@ class _CustomTabState extends State<CustomTab> {
           widget.controller.changeTab(i);
           _gotoPage(i);
         },
+        onDragStarted: () {
+          dragIndex = i;
+          widget.controller.removeTab(i);
+        },
+        onDraggableCanceled: () {
+          print("onDraggableCanceled");
+          if (dragIndex != null) {
+            widget.controller.insertTab(item, dragIndex!);
+          }
+          dragIndex = null;
+        },
+        onDragCompleted: () {
+          if (dragIndex != null && _controller._hoverIndex != -1) {
+            widget.controller.insertTab(item, _controller._hoverIndex);
+          }
+          dragIndex = null;
+        },
         active: widget.controller.selectedIndex == i,
         shape: shape,
         color: widget.backgroundColor ??
@@ -149,16 +167,15 @@ class _CustomTabState extends State<CustomTab> {
                 : const Color.fromARGB(255, 205, 205, 205)),
         padding: widget.padding,
         radius: widget.radius,
+        view: item.body,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconTheme(
-                data: IconThemeData(size: 18),
-                child: widget.controller.items[i].icon),
+            IconTheme(data: IconThemeData(size: 18), child: item.icon),
             SizedBox(
               width: 5,
             ),
-            Text(widget.controller.items[i].label),
+            Text(item.label),
             SizedBox(
               width: 5,
             ),
@@ -513,6 +530,7 @@ class TabRenderBox extends RenderBox
 
 class ShapeButton extends StatefulWidget {
   final Widget child;
+  final Widget view;
   final Color color;
   final Color activeColor;
   final Color hoverColor;
@@ -533,6 +551,7 @@ class ShapeButton extends StatefulWidget {
     super.key,
     required this.shape,
     required this.child,
+    required this.view,
     required this.active,
     required this.padding,
     required this.radius,
@@ -573,13 +592,16 @@ class _ShapeButtonState extends State<ShapeButton> {
           }
         },
         onDraggableCanceled: (velocity, offset) {
+          print(offset);
           if (widget.onDraggableCanceled != null) {
             widget.onDraggableCanceled!();
           }
         },
         feedback: Material(
-          child: Container(
-            child: Text("test"),
+          child: SizedBox(
+            width: 300,
+            height: 400,
+            child: widget.view,
           ),
         ),
         child: ClipPath(

@@ -25,6 +25,16 @@ class CustomTabController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void insertTab(TabItem item, int index) {
+    items.insert(index, item);
+    if (index <= selectedIndex) {
+      selectedIndex = selectedIndex + 1;
+    } else {
+      selectedIndex = selectedIndex;
+    }
+    notifyListeners();
+  }
+
   TabItem? removeTab(int index) {
     if (index >= 0 && index < items.length) {
       var item = items.removeAt(index);
@@ -35,7 +45,7 @@ class CustomTabController extends ChangeNotifier {
       }
       if (index <= selectedIndex) {
         selectedIndex = selectedIndex - 1;
-      }else{
+      } else {
         selectedIndex = selectedIndex;
       }
       notifyListeners();
